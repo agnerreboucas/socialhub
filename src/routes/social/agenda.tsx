@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import {
   aplicarAgendaIcs,
+  atualizarPublicacao,
   definirFormatoDaPauta,
   lerAgendaIcs,
   listarAgenda,
@@ -51,7 +52,7 @@ import {
 import { TIPO_DE_EVENTO_LABELS } from "@/lib/social/format";
 import { can } from "@/lib/social/permissions";
 import { useSocialSession } from "@/lib/social/session";
-import type { Evento, FormatoPublicavel, TipoDeEvento } from "@/lib/social/types";
+import type { Evento, FormatoPublicavel, Post, TipoDeEvento } from "@/lib/social/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/social/agenda")({
@@ -99,6 +100,9 @@ function AgendaPage() {
   // publicação?" e depois a data que os dois formulários já vêm preenchidos.
   const [criandoNoDia, setCriandoNoDia] = useState<string | null>(null);
   const [publicandoNoDia, setPublicandoNoDia] = useState<string | null>(null);
+  // A peça expandida no painel do dia, e a que está no diálogo de remarcar.
+  const [pecaAberta, setPecaAberta] = useState<string | null>(null);
+  const [reagendando, setReagendando] = useState<Post | null>(null);
   // Colunas vazias começam recolhidas: o que não tem nada não deveria ocupar um
   // sexto da largura, e a faixa fina continua dizendo que a etapa existe.
   const [recolhidas, setRecolhidas] = useState<FaseDoQuadro[]>([]);
@@ -172,6 +176,36 @@ function AgendaPage() {
       toast.success("Formato definido.");
     },
     onError: () => toast.error("Não foi possível definir o formato."),
+  });
+
+  /**
+   * Remarcar e cancelar, a partir do calendário.
+   *
+   * As duas passam pela mesma função do servidor que já governa aprovação e
+   * publicação — é lá que mora a regra de o que já foi ao ar não voltar atrás, e
+   * duplicá-la aqui seria criar uma segunda verdade que uma hora discorda da
+   * primeira.
+   */
+  const mexerNaPeca = useMutation({
+    mutationFn: (entrada: {
+      postId: string;
+      acao: "reagendar" | "cancelar_agendamento";
+      scheduledFor?: string | null;
+    }) => atualizarPublicacao({ data: entrada }),
+    onSuccess: (resultado, entrada) => {
+      if (!resultado.ok) {
+        toast.error(resultado.erro ?? "Não foi possível alterar a publicação.");
+        return;
+      }
+      invalidar();
+      setReagendando(null);
+      toast.success(
+        entrada.acao === "reagendar"
+          ? "Publicação remarcada."
+          : "Agendamento cancelado. A peça continua salva, agora sem data.",
+      );
+    },
+    onError: () => toast.error("Não foi possível alterar a publicação."),
   });
 
   const remover = useMutation({
@@ -405,6 +439,21 @@ function AgendaPage() {
             onVincular={podeEditar ? (evento) => setEditando(evento) : undefined}
             onNovoCompromisso={podeEditar ? () => setEditando("novo") : undefined}
             onNovaPublicacao={podeEditar ? () => setPublicandoNoDia(diaAberto) : undefined}
+            pecaAberta={pecaAberta}
+            onAbrirPeca={setPecaAberta}
+            onEditarPeca={
+              podeEditar
+                ? (post) =>
+                    navigate({ to: "/social/publicacao/$postId", params: { postId: post.id } })
+                : undefined
+            }
+            onReagendarPeca={podeEditar ? (post) => setReagendando(post) : undefined}
+            onCancelarPeca={
+              podeEditar
+                ? (post) => mexerNaPeca.mutate({ postId: post.id, acao: "cancelar_agendamento" })
+                : undefined
+            }
+            pecaOcupada={mexerNaPeca.isPending ? (mexerNaPeca.variables?.postId ?? null) : null}
           />
         </SectionCard>
       ) : null}
@@ -480,6 +529,21 @@ function AgendaPage() {
         />
       ) : null}
 
+      {reagendando ? (
+        <DialogoDeReagendamento
+          post={reagendando}
+          salvando={mexerNaPeca.isPending}
+          onFechar={() => setReagendando(null)}
+          onConfirmar={(quando) =>
+            mexerNaPeca.mutate({
+              postId: reagendando.id,
+              acao: "reagendar",
+              scheduledFor: quando,
+            })
+          }
+        />
+      ) : null}
+
       {criandoNoDia ? (
         <EscolhaDoQueCriar
           dia={criandoNoDia}
@@ -524,6 +588,95 @@ function AgendaPage() {
       ) : null}
     </div>
   );
+}
+
+/**
+ * Remarcar uma publicação: escolher a nova data e ver a antiga ao lado.
+ *
+ * A data antiga fica escrita na tela de propósito. Remarcar é uma operação em
+ * que a pessoa quase sempre quer mover **em relação** ao que estava marcado —
+ * "empurra para depois do comício" —, e esconder o de-onde obriga a fechar o
+ * diálogo para lembrar.
+ */
+function DialogoDeReagendamento({
+  post,
+  salvando,
+  onFechar,
+  onConfirmar,
+}: {
+  post: Post;
+  salvando: boolean;
+  onFechar: () => void;
+  onConfirmar: (quando: string) => void;
+}) {
+  const atual = post.scheduledFor ?? post.publishedAt;
+  const [quando, setQuando] = useState(() =>
+    atual ? paraCampoLocal(atual) : `${chaveDoDia(new Date())}T09:00`,
+  );
+
+  return (
+    <Dialog open onOpenChange={(aberto) => (aberto ? null : onFechar())}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Reagendar publicação</DialogTitle>
+          <DialogDescription>
+            {atual
+              ? `Hoje está marcada para ${new Date(atual).toLocaleString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}.`
+              : "Esta peça ainda não tem data — escolher uma agora é agendá-la."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <p className="line-clamp-2 rounded-lg border border-border bg-secondary/40 p-2.5 text-sm">
+          {post.caption || "(sem legenda)"}
+        </p>
+
+        <Campo rotulo="Nova data e hora">
+          <input
+            type="datetime-local"
+            value={quando}
+            onChange={(evento) => setQuando(evento.target.value)}
+            className="w-full rounded-lg border border-border bg-secondary/60 px-3 py-2 text-sm outline-none focus-visible:border-ring"
+          />
+        </Campo>
+
+        <DialogFooter>
+          <button
+            type="button"
+            onClick={onFechar}
+            className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-secondary"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            disabled={!quando || salvando}
+            onClick={() => onConfirmar(new Date(quando).toISOString())}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+          >
+            Reagendar
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * ISO para o formato que o `datetime-local` entende.
+ *
+ * `toISOString()` não serve: ele devolve UTC, e o campo iria mostrar a hora
+ * errada para quem está em São Paulo. O caminho é remontar a partir das partes
+ * locais.
+ */
+function paraCampoLocal(iso: string): string {
+  const data = new Date(iso);
+  const dois = (valor: number) => String(valor).padStart(2, "0");
+  return `${data.getFullYear()}-${dois(data.getMonth() + 1)}-${dois(data.getDate())}T${dois(data.getHours())}:${dois(data.getMinutes())}`;
 }
 
 /**

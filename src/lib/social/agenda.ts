@@ -436,3 +436,65 @@ export function esperandoAprovacao(posts: Post[]): Post[] {
       ),
     );
 }
+
+// --- Mexer numa publicação a partir do calendário -----------------------------
+
+/**
+ * O que dá para fazer com esta peça sem sair do calendário.
+ *
+ * A pergunta parece a mesma de `podeMoverPara`, e não é. Aquela governa o
+ * **quadro de produção**, onde a peça anda de fase; esta governa o **calendário**,
+ * onde a peça tem uma data e a pessoa quer mexer nela: adiar, tirar do ar antes
+ * de ir ao ar, corrigir a legenda.
+ *
+ * A regra dura é uma só: **o que já foi publicado não se remarca nem se
+ * cancela.** A rede não desfaz uma publicação a pedido nosso, e oferecer o botão
+ * produziria um estado que a plataforma não consegue sustentar — a tela diria
+ * "cancelada" e o post continuaria no ar.
+ */
+export type AcaoNaPeca = "editar" | "reagendar" | "cancelar";
+
+export function podeNaPeca(post: Post, acao: AcaoNaPeca): boolean {
+  if (post.status === "publicado") {
+    // Editar segue valendo: a legenda de arquivo e os campos internos continuam
+    // corrigíveis. O que não volta atrás é a data e o fato de ter saído.
+    return acao === "editar";
+  }
+  if (acao === "cancelar") {
+    // Só faz sentido cancelar o que está de fato marcado para sair. Uma ideia
+    // sem data não tem compromisso a desfazer.
+    return post.scheduledFor !== null;
+  }
+  return true;
+}
+
+/**
+ * Por que o botão está desligado — a frase que a tela mostra.
+ *
+ * Um botão cinza sem explicação faz a pessoa clicar três vezes e concluir que a
+ * plataforma travou. Devolve `null` quando a ação é permitida.
+ */
+export function motivoParaNaoMexer(post: Post, acao: AcaoNaPeca): string | null {
+  if (podeNaPeca(post, acao)) return null;
+
+  if (post.status === "publicado") {
+    return acao === "reagendar"
+      ? "Esta peça já foi publicada — a data de quando ela saiu é história, não agendamento."
+      : "Esta peça já está no ar. A rede não desfaz publicação a nosso pedido; para tirá-la, é preciso apagar direto na rede.";
+  }
+
+  return "Esta peça ainda não tem data marcada, então não há agendamento a cancelar.";
+}
+
+/**
+ * O estado em que a peça fica quando o agendamento é cancelado.
+ *
+ * Cancelar **não apaga**. O trabalho da peça continua existindo — o que some é o
+ * compromisso de data. Uma peça aprovada volta para "aprovado" e fica pronta
+ * para receber outra data; uma que ainda estava em produção volta para a fase em
+ * que estava. Apagar por engano é o erro caro aqui, e "cancelar" é uma palavra
+ * que muita gente lê como "descartar".
+ */
+export function statusAoCancelar(post: Post): PostStatus {
+  return post.status === "agendado" ? "aprovado" : post.status;
+}

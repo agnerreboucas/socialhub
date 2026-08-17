@@ -1,12 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import {
+  ArrowRight,
+  CalendarClock,
   CalendarDays,
+  CalendarX,
+  ChevronDown,
   ChevronLeft,
   Clock,
   Eye,
   Heart,
   MapPin,
   MessageCircle,
+  Pencil,
   Plus,
   Send,
 } from "lucide-react";
@@ -14,12 +19,14 @@ import {
 import {
   ROTULO_DA_MARCA,
   chaveDoDia,
+  motivoParaNaoMexer,
   distribuirPorDia,
   gradeDoMes,
   horaDoItem,
   lerDia,
   marcaDaPeca,
   nomeDoDiaDaSemana,
+  type AcaoNaPeca,
   type ItemDoDia,
   type MarcaDaPeca,
 } from "@/lib/social/agenda";
@@ -384,6 +391,12 @@ export function PainelDoDia({
   onVincular,
   onNovoCompromisso,
   onNovaPublicacao,
+  pecaAberta = null,
+  onAbrirPeca,
+  onEditarPeca,
+  onReagendarPeca,
+  onCancelarPeca,
+  pecaOcupada = null,
   contas = [],
 }: {
   dia: string;
@@ -393,6 +406,13 @@ export function PainelDoDia({
   /** Ausentes quando quem está olhando não tem permissão de criar. */
   onNovoCompromisso?: () => void;
   onNovaPublicacao?: () => void;
+  /** A peça expandida. Uma de cada vez: duas abertas viram uma parede de texto. */
+  pecaAberta?: string | null;
+  onAbrirPeca?: (postId: string | null) => void;
+  onEditarPeca?: (post: Post) => void;
+  onReagendarPeca?: (post: Post) => void;
+  onCancelarPeca?: (post: Post) => void;
+  pecaOcupada?: string | null;
   contas?: SocialAccount[];
 }) {
   const redeDaConta = new Map(contas.map((conta) => [conta.id, conta.networkId]));
@@ -449,6 +469,14 @@ export function PainelDoDia({
                   redes={item.post.accountIds
                     .map((id) => redeDaConta.get(id))
                     .filter((rede): rede is NetworkId => Boolean(rede))}
+                  aberta={pecaAberta === item.post.id}
+                  onAlternar={() =>
+                    onAbrirPeca?.(pecaAberta === item.post.id ? null : item.post.id)
+                  }
+                  onEditar={onEditarPeca ? () => onEditarPeca(item.post) : undefined}
+                  onReagendar={onReagendarPeca ? () => onReagendarPeca(item.post) : undefined}
+                  onCancelar={onCancelarPeca ? () => onCancelarPeca(item.post) : undefined}
+                  ocupada={pecaOcupada === item.post.id}
                 />
               )}
             </li>
@@ -524,51 +552,209 @@ function CartaoDeEvento({
   );
 }
 
+/**
+ * A publicação dentro do dia — fechada é uma linha, aberta é a peça inteira.
+ *
+ * Antes o cartão era um link: clicar levava para a tela da publicação e tirava
+ * a pessoa do calendário. Isso é caro justamente no gesto mais comum, que é
+ * conferir três ou quatro peças de um dia em sequência — cada conferida custava
+ * ir e voltar, e a volta perdia o dia que estava aberto.
+ *
+ * Agora o clique **expande no lugar**. A legenda inteira, os números e as ações
+ * ficam ali, e o dia continua na tela por baixo. A tela cheia da publicação
+ * continua a um clique, para quando a pessoa realmente quer ir até lá.
+ */
 function CartaoDePeca({
   post,
   hora,
   redes,
+  aberta,
+  onAlternar,
+  onEditar,
+  onReagendar,
+  onCancelar,
+  ocupada = false,
 }: {
   post: Post;
   hora: string | null;
   redes: NetworkId[];
+  aberta: boolean;
+  onAlternar: () => void;
+  /** Ausentes quando quem está olhando não tem permissão de publicar. */
+  onEditar?: () => void;
+  onReagendar?: () => void;
+  onCancelar?: () => void;
+  /** Uma operação em curso nesta peça: desliga os botões enquanto isso. */
+  ocupada?: boolean;
 }) {
+  const marca = marcaDaPeca(post);
+
   return (
-    <Link
-      to="/social/publicacao/$postId"
-      params={{ postId: post.id }}
-      className="flex min-w-0 items-start gap-3 rounded-xl border border-border p-3 transition-colors hover:border-accent/60 hover:bg-secondary/40"
+    <div
+      className={cn(
+        "rounded-xl border transition-colors",
+        aberta ? "border-accent/60 bg-secondary/30" : "border-border hover:border-accent/40",
+      )}
     >
-      <span
-        aria-hidden
-        className={cn("mt-1.5 size-2 shrink-0 rounded-full", COR_DA_MARCA[marcaDaPeca(post)])}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="text-xs tabular-nums text-muted-foreground">{hora ?? "—"}</span>
-          {/* O rótulo é o da marcação, não o do papel: quem olha o dia precisa
-              saber se aquilo espera um "sim" dela, e "Agendado" não diz isso. */}
-          <span className="text-xs text-muted-foreground">
-            {ROTULO_DA_MARCA[marcaDaPeca(post)]}
-          </span>
-          {post.format !== "a_definir" ? (
-            <span className="rounded border border-border px-1 py-0.5 text-[10px] text-muted-foreground">
-              {NOME_DO_FORMATO[post.format]}
-            </span>
-          ) : null}
-          <PontosDasRedes redes={redes} />
-        </div>
-        <p className="mt-0.5 line-clamp-2 text-sm">{resumo(post)}</p>
-        {post.metrics ? (
-          // Os números da peça publicada ficam aqui mesmo: quem olha o dia
-          // quer saber como foi, e ir a outra tela para descobrir é atrito.
-          <p className="mt-1 text-xs text-muted-foreground">
-            <NumerosDaPeca post={post} />
+      <button
+        type="button"
+        onClick={onAlternar}
+        aria-expanded={aberta}
+        className="flex w-full min-w-0 items-start gap-3 rounded-xl p-3 text-left"
+      >
+        <span
+          aria-hidden
+          className={cn("mt-1.5 size-2 shrink-0 rounded-full", COR_DA_MARCA[marca])}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-xs tabular-nums text-muted-foreground">{hora ?? "—"}</span>
+            {/* O rótulo é o da marcação, não o do papel: quem olha o dia precisa
+                saber se aquilo espera um "sim" dela, e "Agendado" não diz isso. */}
+            <span className="text-xs text-muted-foreground">{ROTULO_DA_MARCA[marca]}</span>
+            {post.format !== "a_definir" ? (
+              <span className="rounded border border-border px-1 py-0.5 text-[10px] text-muted-foreground">
+                {NOME_DO_FORMATO[post.format]}
+              </span>
+            ) : null}
+            <PontosDasRedes redes={redes} />
+          </div>
+          <p className={cn("mt-0.5 text-sm", aberta ? "" : "line-clamp-2")}>
+            {aberta ? post.caption || "(sem legenda)" : resumo(post)}
           </p>
-        ) : null}
-      </div>
-    </Link>
+          {post.metrics ? (
+            // Os números da peça publicada ficam aqui mesmo: quem olha o dia
+            // quer saber como foi, e ir a outra tela para descobrir é atrito.
+            <p className="mt-1 text-xs text-muted-foreground">
+              <NumerosDaPeca post={post} />
+            </p>
+          ) : null}
+        </div>
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            "mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform",
+            aberta && "rotate-180",
+          )}
+        />
+      </button>
+
+      {aberta ? (
+        <div className="space-y-3 border-t border-border px-3 pb-3 pt-3">
+          <dl className="grid gap-x-4 gap-y-1.5 text-xs sm:grid-cols-2">
+            <Linha rotulo="Situação">{ROTULO_DA_MARCA[marca]}</Linha>
+            <Linha rotulo="Formato">
+              {post.format === "a_definir" ? "ainda a definir" : NOME_DO_FORMATO[post.format]}
+            </Linha>
+            <Linha rotulo={post.publishedAt ? "Publicada em" : "Agendada para"}>
+              {post.publishedAt
+                ? quandoPorExtenso(post.publishedAt)
+                : post.scheduledFor
+                  ? quandoPorExtenso(post.scheduledFor)
+                  : "sem data marcada"}
+            </Linha>
+            <Linha rotulo="Redes">
+              {redes.length > 0 ? redes.map((rede) => NETWORKS[rede].label).join(", ") : "nenhuma"}
+            </Linha>
+          </dl>
+
+          <div className="flex flex-wrap gap-1.5">
+            <AcaoDaPeca
+              rotulo="Editar"
+              icone={Pencil}
+              acao="editar"
+              post={post}
+              ocupada={ocupada}
+              onAgir={onEditar}
+            />
+            <AcaoDaPeca
+              rotulo="Reagendar"
+              icone={CalendarClock}
+              acao="reagendar"
+              post={post}
+              ocupada={ocupada}
+              onAgir={onReagendar}
+            />
+            <AcaoDaPeca
+              rotulo="Cancelar"
+              icone={CalendarX}
+              acao="cancelar"
+              post={post}
+              ocupada={ocupada}
+              onAgir={onCancelar}
+            />
+            <Link
+              to="/social/publicacao/$postId"
+              params={{ postId: post.id }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs transition-colors hover:bg-secondary"
+            >
+              Abrir a publicação <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
+}
+
+function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-2">
+      <dt className="shrink-0 text-muted-foreground">{rotulo}</dt>
+      <dd className="min-w-0 truncate">{children}</dd>
+    </div>
+  );
+}
+
+/**
+ * Um botão de ação que sabe quando não pode agir — e diz por quê.
+ *
+ * O `title` com o motivo é o que separa "desabilitado" de "quebrado". Um botão
+ * cinza mudo faz a pessoa clicar três vezes e concluir que a plataforma travou;
+ * a frase responde antes do terceiro clique.
+ */
+function AcaoDaPeca({
+  rotulo,
+  icone: Icone,
+  acao,
+  post,
+  ocupada,
+  onAgir,
+}: {
+  rotulo: string;
+  icone: typeof Pencil;
+  acao: AcaoNaPeca;
+  post: Post;
+  ocupada: boolean;
+  onAgir?: () => void;
+}) {
+  const motivo = motivoParaNaoMexer(post, acao);
+  const semPermissao = !onAgir;
+
+  return (
+    <button
+      type="button"
+      disabled={Boolean(motivo) || semPermissao || ocupada}
+      onClick={onAgir}
+      title={motivo ?? (semPermissao ? "Seu papel não permite alterar publicações." : undefined)}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs transition-colors",
+        acao === "cancelar"
+          ? "hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive"
+          : "hover:bg-secondary",
+        "disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent",
+      )}
+    >
+      <Icone className="size-3.5" />
+      {rotulo}
+    </button>
+  );
+}
+
+/** "20/08 às 09:00" — a data por extenso curto, para o painel aberto. */
+function quandoPorExtenso(iso: string): string {
+  const data = new Date(iso);
+  return `${data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} às ${data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
 /**

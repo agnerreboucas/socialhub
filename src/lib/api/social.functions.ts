@@ -106,9 +106,11 @@ import {
   chaveDoDia,
   eventosSemPauta,
   motivoParaNaoAvancar,
+  motivoParaNaoMexer,
   pautaDoEvento,
   podeMoverPara,
   resumirDia,
+  statusAoCancelar,
 } from "@/lib/social/agenda";
 import { FUSO_DA_CAMPANHA, paredeNaZona } from "@/lib/social/fuso";
 import { lerIcs, planejarImportacao } from "@/lib/social/ics";
@@ -1049,8 +1051,17 @@ export const atualizarPublicacao = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       postId: z.string(),
-      acao: z.enum(["aprovar", "reprovar", "publicar_agora", "excluir"]),
+      acao: z.enum([
+        "aprovar",
+        "reprovar",
+        "publicar_agora",
+        "excluir",
+        "reagendar",
+        "cancelar_agendamento",
+      ]),
       userId: z.string().optional(),
+      /** Novo instante, só para `reagendar`. */
+      scheduledFor: z.string().nullable().optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -1091,6 +1102,30 @@ export const atualizarPublicacao = createServerFn({ method: "POST" })
           shares: 0,
           saves: 0,
         };
+        break;
+      }
+      case "reagendar": {
+        const motivo = motivoParaNaoMexer(post, "reagendar");
+        if (motivo) return { ok: false as const, post, issues: [], erro: motivo };
+        if (!data.scheduledFor) {
+          return {
+            ok: false as const,
+            post,
+            issues: [],
+            erro: "Escolha a nova data e hora.",
+          };
+        }
+        post.scheduledFor = data.scheduledFor;
+        // Remarcar uma peça já aprovada volta a comprometê-la com uma data. Uma
+        // que ainda está em produção mantém a fase: pôr data não é aprovar.
+        if (post.status === "aprovado") post.status = "agendado";
+        break;
+      }
+      case "cancelar_agendamento": {
+        const motivo = motivoParaNaoMexer(post, "cancelar");
+        if (motivo) return { ok: false as const, post, issues: [], erro: motivo };
+        post.scheduledFor = null;
+        post.status = statusAoCancelar(post);
         break;
       }
       case "excluir":

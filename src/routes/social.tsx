@@ -32,6 +32,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ROLE_LABELS } from "@/lib/social/format";
 import { can } from "@/lib/social/permissions";
 import { SocialSessionProvider, useSocialSession } from "@/lib/social/session";
+import { TrocaDeAplicativo } from "@/components/troca-de-aplicativo";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/social")({
@@ -127,13 +128,18 @@ function SocialShell() {
           >
             <BarChart3 className="size-5 text-white" />
           </div>
-          <div className="leading-tight">
+          <div className="min-w-0 leading-tight">
             <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               Ampliação
             </div>
             <div className="text-base font-semibold">
               Social <span className="text-accent">Hub</span>
             </div>
+          </div>
+          {/* A saída para os outros aplicativos. Sem ela o Social é um beco:
+              dá para entrar vindo da rádio e não dá para voltar. */}
+          <div className="ml-auto">
+            <TrocaDeAplicativo compacto />
           </div>
         </div>
 

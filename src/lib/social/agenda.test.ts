@@ -11,6 +11,9 @@ import {
   marcaDaPeca,
   montarQuadro,
   motivoParaNaoAvancar,
+  motivoParaNaoMexer,
+  podeNaPeca,
+  statusAoCancelar,
   pautaDoEvento,
   pautasDoEvento,
   podeMoverPara,
@@ -418,4 +421,56 @@ test("peça sem data ainda entra na fila, mas no fim", () => {
     esperandoAprovacao([semData, comData]).map((peca) => peca.id),
     [comData.id, semData.id],
   );
+});
+
+// --- Mexer na peça a partir do calendário -------------------------------------
+
+test("o que já foi publicado não se remarca nem se cancela", () => {
+  const noAr = post({ status: "publicado", publishedAt: "2026-08-15T09:00:00" });
+
+  assert.equal(podeNaPeca(noAr, "reagendar"), false);
+  assert.equal(podeNaPeca(noAr, "cancelar"), false);
+  // Corrigir a legenda de arquivo continua valendo — o que não volta atrás é o
+  // fato de a peça ter saído.
+  assert.equal(podeNaPeca(noAr, "editar"), true);
+});
+
+test("uma peça agendada aceita as três ações", () => {
+  const agendada = post({ status: "agendado", scheduledFor: "2026-08-20T09:00:00" });
+
+  for (const acao of ["editar", "reagendar", "cancelar"] as const) {
+    assert.equal(podeNaPeca(agendada, acao), true, acao);
+  }
+});
+
+test("sem data marcada não há agendamento a cancelar", () => {
+  const semData = post({ status: "rascunho", scheduledFor: null });
+
+  assert.equal(podeNaPeca(semData, "cancelar"), false);
+  // Mas marcar uma data pela primeira vez é justamente o que "reagendar" faz.
+  assert.equal(podeNaPeca(semData, "reagendar"), true);
+});
+
+test("o botão desligado explica o porquê, em vez de só ficar cinza", () => {
+  const noAr = post({ status: "publicado", publishedAt: "2026-08-15T09:00:00" });
+  const semData = post({ status: "rascunho" });
+
+  assert.match(motivoParaNaoMexer(noAr, "cancelar") ?? "", /já está no ar/i);
+  assert.match(motivoParaNaoMexer(noAr, "reagendar") ?? "", /já foi publicada/i);
+  assert.match(motivoParaNaoMexer(semData, "cancelar") ?? "", /não tem data marcada/i);
+  // Ação permitida não produz frase nenhuma.
+  assert.equal(motivoParaNaoMexer(semData, "editar"), null);
+});
+
+test("cancelar devolve a peça para aprovada, não para o lixo", () => {
+  // É a decisão que protege o trabalho: "cancelar" se lê como "descartar", e
+  // aqui significa só tirar a data.
+  assert.equal(statusAoCancelar(post({ status: "agendado" })), "aprovado");
+});
+
+test("cancelar não empurra de fase quem ainda estava produzindo", () => {
+  // Uma peça em rascunho com data marcada volta a ser rascunho sem data — subir
+  // ela para "aprovado" seria aprovar sozinho o que ninguém aprovou.
+  assert.equal(statusAoCancelar(post({ status: "rascunho" })), "rascunho");
+  assert.equal(statusAoCancelar(post({ status: "aguardando_aprovacao" })), "aguardando_aprovacao");
 });

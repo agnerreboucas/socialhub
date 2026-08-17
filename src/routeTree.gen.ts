@@ -10,6 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SocialRouteImport } from './routes/social'
+import { Route as RelogiosRouteImport } from './routes/relogios'
+import { Route as RadioRouteImport } from './routes/radio'
+import { Route as ProgramacaoRouteImport } from './routes/programacao'
+import { Route as BibliotecaRouteImport } from './routes/biblioteca'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SocialIndexRouteImport } from './routes/social/index'
 import { Route as SocialEntrarRouteImport } from './routes/social_.entrar'
@@ -37,6 +42,31 @@ import { Route as SocialContaAccountIdRouteImport } from './routes/social/conta.
 const SocialRoute = SocialRouteImport.update({
   id: '/social',
   path: '/social',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RelogiosRoute = RelogiosRouteImport.update({
+  id: '/relogios',
+  path: '/relogios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RadioRoute = RadioRouteImport.update({
+  id: '/radio',
+  path: '/radio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgramacaoRoute = ProgramacaoRouteImport.update({
+  id: '/programacao',
+  path: '/programacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BibliotecaRoute = BibliotecaRouteImport.update({
+  id: '/biblioteca',
+  path: '/biblioteca',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -157,6 +187,11 @@ const SocialContaAccountIdRoute = SocialContaAccountIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/biblioteca': typeof BibliotecaRoute
+  '/programacao': typeof ProgramacaoRoute
+  '/radio': typeof RadioRoute
+  '/relogios': typeof RelogiosRoute
   '/social': typeof SocialRouteWithChildren
   '/oauth/retorno': typeof OauthRetornoRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
@@ -183,6 +218,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/biblioteca': typeof BibliotecaRoute
+  '/programacao': typeof ProgramacaoRoute
+  '/radio': typeof RadioRoute
+  '/relogios': typeof RelogiosRoute
   '/oauth/retorno': typeof OauthRetornoRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
   '/social/agenda': typeof SocialAgendaRoute
@@ -209,6 +249,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/biblioteca': typeof BibliotecaRoute
+  '/programacao': typeof ProgramacaoRoute
+  '/radio': typeof RadioRoute
+  '/relogios': typeof RelogiosRoute
   '/social': typeof SocialRouteWithChildren
   '/oauth/retorno': typeof OauthRetornoRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
@@ -237,6 +282,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
+    | '/biblioteca'
+    | '/programacao'
+    | '/radio'
+    | '/relogios'
     | '/social'
     | '/oauth/retorno'
     | '/relatorio/$token'
@@ -263,6 +313,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
+    | '/biblioteca'
+    | '/programacao'
+    | '/radio'
+    | '/relogios'
     | '/oauth/retorno'
     | '/relatorio/$token'
     | '/social/agenda'
@@ -288,6 +343,11 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
+    | '/biblioteca'
+    | '/programacao'
+    | '/radio'
+    | '/relogios'
     | '/social'
     | '/oauth/retorno'
     | '/relatorio/$token'
@@ -315,6 +375,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  BibliotecaRoute: typeof BibliotecaRoute
+  ProgramacaoRoute: typeof ProgramacaoRoute
+  RadioRoute: typeof RadioRoute
+  RelogiosRoute: typeof RelogiosRoute
   SocialRoute: typeof SocialRouteWithChildren
   OauthRetornoRoute: typeof OauthRetornoRoute
   RelatorioTokenRoute: typeof RelatorioTokenRoute
@@ -328,6 +393,41 @@ declare module '@tanstack/react-router' {
       path: '/social'
       fullPath: '/social'
       preLoaderRoute: typeof SocialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/relogios': {
+      id: '/relogios'
+      path: '/relogios'
+      fullPath: '/relogios'
+      preLoaderRoute: typeof RelogiosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/radio': {
+      id: '/radio'
+      path: '/radio'
+      fullPath: '/radio'
+      preLoaderRoute: typeof RadioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/programacao': {
+      id: '/programacao'
+      path: '/programacao'
+      fullPath: '/programacao'
+      preLoaderRoute: typeof ProgramacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biblioteca': {
+      id: '/biblioteca'
+      path: '/biblioteca'
+      fullPath: '/biblioteca'
+      preLoaderRoute: typeof BibliotecaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -543,6 +643,11 @@ const SocialRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  BibliotecaRoute: BibliotecaRoute,
+  ProgramacaoRoute: ProgramacaoRoute,
+  RadioRoute: RadioRoute,
+  RelogiosRoute: RelogiosRoute,
   SocialRoute: SocialRouteWithChildren,
   OauthRetornoRoute: OauthRetornoRoute,
   RelatorioTokenRoute: RelatorioTokenRoute,
