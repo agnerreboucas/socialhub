@@ -1,6 +1,7 @@
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
+import { erroEngolidoPeloH3 } from "./lib/erro-engolido";
 import { renderErrorPage } from "./lib/error-page";
 import { exigirProducaoConfigurada } from "./lib/producao.server";
 
@@ -50,19 +51,31 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
-// h3 swallows in-handler throws into a normal 500 Response with body
-// {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
+/**
+ * O h3 engole um `throw` de dentro do handler e devolve um 500 comum, em JSON.
+ * Um `try/catch` aqui fora nunca dispara para esses casos — por isso a
+ * inspeção da resposta.
+ *
+ * A marca é `"unhandled":true`. **Só ela**, e isso é uma correção: a versão
+ * anterior exigia também `"message":"HTTPError"`, e uma implantação real
+ * devolveu `{"error":true,"status":500,"unhandled":true}` — sem o `message`.
+ * O resultado é que o visitante recebia o JSON cru na cara, que não diz nada a
+ * ninguém, em vez da página de erro que explica o que fazer. Casar pelo campo
+ * que sempre existe é o que torna isto confiável entre versões do h3.
+ *
+ * O corpo original vai para o log junto: quando o capturador de erro não pegou
+ * a exceção, aquele JSON é a única pista que sobra de por que a página caiu.
+ */
 async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
   if (response.status < 500) return response;
   const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) return response;
+  const body = contentType.includes("application/json") ? await response.clone().text() : "";
+  if (!erroEngolidoPeloH3(response.status, contentType, body)) return response;
 
-  const body = await response.clone().text();
-  if (!body.includes('"unhandled":true') || !body.includes('"message":"HTTPError"')) {
-    return response;
-  }
-
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  console.error(
+    consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`),
+    `\ncorpo devolvido pelo h3: ${body}`,
+  );
   return new Response(renderErrorPage(), {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },

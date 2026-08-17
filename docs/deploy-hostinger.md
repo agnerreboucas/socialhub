@@ -104,6 +104,58 @@ Se a aplicação sobe mas nada persiste entre reinícios, a `DATABASE_URL` não 
 chegando: sem ela a plataforma cai em modo demonstração, com dados semeados em
 memória.
 
+## Quando dá errado
+
+### A página mostra `{"error":true,"status":500,"unhandled":true}`
+
+**São as variáveis do passo 3 que não chegaram ao processo.** É de longe a causa
+mais comum, e o sintoma engana: parece defeito da aplicação e é recusa
+deliberada dela.
+
+O que acontece por baixo: a conferência de produção roda quando o módulo do
+servidor carrega, antes da primeira requisição, e derruba a subida se faltar
+`DATABASE_URL`, `SESSION_SECRET` ou `ADMIN_EMAIL`. Como a falha é na carga do
+módulo, nada nosso chega a rodar — quem responde é a camada HTTP por baixo, com
+esse JSON que não diz nada. **A mensagem de verdade está no log de execução**
+(não no log de compilação, que terá passado sem erro), e ela nomeia cada
+variável que falta e por que ela é obrigatória:
+
+```
+A plataforma não subiu porque falta configuração obrigatória de produção.
+
+  DATABASE_URL
+    por quê: sem banco a plataforma entra em modo demonstração, e em
+             demonstração qualquer senha entra
+```
+
+Configure as três no painel e reinicie. Repare que o mesmo JSON aparece em
+`/api/saude` — e é justamente esse o sinal de que a falha é na subida, não numa
+tela: o teste de saúde não passa pelo roteador, então se nem ele responde, o
+problema é anterior a tudo.
+
+Por que a plataforma prefere não subir a subir sem banco: sem `DATABASE_URL` ela
+entra em modo demonstração, e **em modo demonstração qualquer senha entra**. Num
+arquivo que se manda por link isso é correto; num endereço público é a campanha
+inteira aberta para quem descobrir a URL.
+
+### `ERROR: No output directory found after build`
+
+O build terminou sem gerar servidor. Confira se o `package.json` tem
+`"build": "vite build && node scripts/preparar-saida.mjs"` — é o segundo comando
+que move o resultado para `.output`, que é onde a hospedagem procura.
+
+Se no log aparecer `Duplicate key "nitro"`, não se assuste: a plataforma injeta
+um bloco de configuração próprio no `vite.config.ts` na hora de compilar, e o
+nosso vem depois. Em objeto de JavaScript a última chave vence, e a nossa define
+`node-server`, que é o alvo certo para esta aplicação.
+
+### Sobe, mas nada persiste entre reinícios
+
+A `DATABASE_URL` não está chegando: sem ela a plataforma cai em modo
+demonstração, com dados em memória. Confirme em `/api/saude` — ele responde
+`"banco":"não configurado"` nesse caso, e `"banco":"ok"` quando a conexão está
+de pé.
+
 ## O que ainda depende de você
 
 - **Trocar a senha `@EleitaEm2026`.** Ela está em commits já publicados dos
