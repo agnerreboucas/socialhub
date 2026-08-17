@@ -1,0 +1,1123 @@
+{
+  "versao": 1,
+  "geradoEm": "2026-08-17T17:51:58.521Z",
+  "projects": [
+    {
+      "id": "proj-campanha",
+      "name": "Campanha Neon Cunha (demonstração)",
+      "client": "Campanha Neon Cunha"
+    }
+  ],
+  "users": [
+    {
+      "id": "user-campanha",
+      "name": "Campanha Neon Cunha",
+      "email": "campanha.neoncunha@gmail.com",
+      "role": "administrador",
+      "projectIds": [
+        "proj-campanha"
+      ],
+      "lastActiveAt": "2026-08-14T23:08:00.488Z",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.6 0.21 15), oklch(0.45 0.19 320))"
+    },
+    {
+      "id": "user-ampliacao",
+      "name": "Ampliação Marketing Digital",
+      "email": "ampliacaomktdigital@gmail.com",
+      "role": "administrador",
+      "projectIds": [
+        "proj-campanha"
+      ],
+      "lastActiveAt": "2026-08-14T00:00:00.000Z",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.45 0.2 260), oklch(0.72 0.18 200))"
+    },
+    {
+      "id": "user-conteudo",
+      "name": "Equipe de conteúdo",
+      "email": "conteudo@ampliacao.com.br",
+      "role": "editor",
+      "projectIds": [
+        "proj-campanha"
+      ],
+      "lastActiveAt": "2026-08-14T17:00:22.189Z",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.65 0.2 80), oklch(0.4 0.22 320))"
+    },
+    {
+      "id": "user-atendimento",
+      "name": "Atendimento",
+      "email": "atendimento@ampliacao.com.br",
+      "role": "atendimento",
+      "projectIds": [
+        "proj-campanha"
+      ],
+      "lastActiveAt": "2026-08-14T18:00:22.189Z",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.7 0.2 150), oklch(0.3 0.15 250))"
+    }
+  ],
+  "accounts": [
+    {
+      "id": "acc-ig-neon",
+      "projectId": "proj-campanha",
+      "networkId": "instagram",
+      "handle": "@neoncunha",
+      "displayName": "Neon Cunha",
+      "status": "ativa",
+      "origem": "demonstracao",
+      "adAccountConnected": true,
+      "trackingSince": "2026-08-01",
+      "tokenExpiresAt": "2026-09-28",
+      "lastSyncAt": "2026-08-17",
+      "messagingApproved": true,
+      "avatarGradient": "linear-gradient(135deg, oklch(0.6 0.21 15), oklch(0.45 0.19 320))"
+    },
+    {
+      "id": "acc-fb-neon",
+      "projectId": "proj-campanha",
+      "networkId": "facebook",
+      "handle": "/neoncunha",
+      "displayName": "Neon Cunha",
+      "status": "desconectada",
+      "origem": "demonstracao",
+      "adAccountConnected": false,
+      "trackingSince": "2026-02-15",
+      "tokenExpiresAt": "2026-09-28",
+      "lastSyncAt": null,
+      "messagingApproved": true,
+      "avatarGradient": "linear-gradient(135deg, oklch(0.45 0.2 260), oklch(0.72 0.18 200))"
+    },
+    {
+      "id": "acc-tt-neon",
+      "projectId": "proj-campanha",
+      "networkId": "tiktok",
+      "handle": "@neoncunha",
+      "displayName": "Neon Cunha",
+      "status": "desconectada",
+      "origem": "demonstracao",
+      "adAccountConnected": false,
+      "trackingSince": "2026-02-15",
+      "tokenExpiresAt": "2026-09-28",
+      "lastSyncAt": null,
+      "messagingApproved": false,
+      "avatarGradient": "linear-gradient(135deg, oklch(0.65 0.2 80), oklch(0.4 0.22 320))"
+    },
+    {
+      "id": "acc-yt-neon",
+      "projectId": "proj-campanha",
+      "networkId": "youtube",
+      "handle": "@neoncunha",
+      "displayName": "Neon Cunha",
+      "status": "desconectada",
+      "origem": "demonstracao",
+      "adAccountConnected": false,
+      "trackingSince": "2026-02-15",
+      "tokenExpiresAt": "2026-09-28",
+      "lastSyncAt": null,
+      "messagingApproved": false,
+      "avatarGradient": "linear-gradient(135deg, oklch(0.7 0.2 150), oklch(0.3 0.15 250))"
+    },
+    {
+      "id": "acc-th-neon",
+      "projectId": "proj-campanha",
+      "networkId": "threads",
+      "handle": "@neoncunha",
+      "displayName": "Neon Cunha",
+      "status": "desconectada",
+      "origem": "demonstracao",
+      "adAccountConnected": false,
+      "trackingSince": "2026-02-15",
+      "tokenExpiresAt": "2026-09-28",
+      "lastSyncAt": null,
+      "messagingApproved": false,
+      "avatarGradient": "linear-gradient(135deg, oklch(0.55 0.22 30), oklch(0.35 0.18 280))"
+    },
+    {
+      "id": "acc-li-neon",
+      "projectId": "proj-campanha",
+      "networkId": "linkedin",
+      "handle": "/in/neoncunha",
+      "displayName": "Neon Cunha",
+      "status": "desconectada",
+      "origem": "demonstracao",
+      "adAccountConnected": false,
+      "trackingSince": "2026-02-15",
+      "tokenExpiresAt": "2026-09-28",
+      "lastSyncAt": null,
+      "messagingApproved": true,
+      "avatarGradient": "linear-gradient(135deg, oklch(0.68 0.17 200), oklch(0.38 0.16 265))"
+    }
+  ],
+  "metrics": [
+    {
+      "accountId": "acc-ig-neon",
+      "dias": [
+        {
+          "date": "2026-08-01",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 2019,
+          "paidReach": 0,
+          "organicImpressions": 3423,
+          "paidImpressions": 0,
+          "organicEngagement": 184,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-02",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 0,
+          "paidReach": 0,
+          "organicImpressions": 0,
+          "paidImpressions": 0,
+          "organicEngagement": 0,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-03",
+          "followers": 0,
+          "followersGained": 2,
+          "followersLost": 0,
+          "organicReach": 1360,
+          "paidReach": 0,
+          "organicImpressions": 1774,
+          "paidImpressions": 0,
+          "organicEngagement": 126,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-04",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 907,
+          "paidReach": 0,
+          "organicImpressions": 2687,
+          "paidImpressions": 0,
+          "organicEngagement": 124,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-05",
+          "followers": 0,
+          "followersGained": 2,
+          "followersLost": 0,
+          "organicReach": 1657,
+          "paidReach": 0,
+          "organicImpressions": 3172,
+          "paidImpressions": 0,
+          "organicEngagement": 265,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-06",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 0,
+          "paidReach": 0,
+          "organicImpressions": 0,
+          "paidImpressions": 0,
+          "organicEngagement": 0,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-07",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 0,
+          "paidReach": 0,
+          "organicImpressions": 0,
+          "paidImpressions": 0,
+          "organicEngagement": 0,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-08",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 0,
+          "paidReach": 0,
+          "organicImpressions": 0,
+          "paidImpressions": 0,
+          "organicEngagement": 0,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-09",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 0,
+          "paidReach": 0,
+          "organicImpressions": 0,
+          "paidImpressions": 0,
+          "organicEngagement": 0,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-10",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 0,
+          "paidReach": 0,
+          "organicImpressions": 0,
+          "paidImpressions": 0,
+          "organicEngagement": 0,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-11",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 0,
+          "paidReach": 0,
+          "organicImpressions": 0,
+          "paidImpressions": 0,
+          "organicEngagement": 0,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-12",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 0,
+          "paidReach": 0,
+          "organicImpressions": 0,
+          "paidImpressions": 0,
+          "organicEngagement": 0,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-13",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 0,
+          "paidReach": 0,
+          "organicImpressions": 0,
+          "paidImpressions": 0,
+          "organicEngagement": 0,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-14",
+          "followers": 0,
+          "followersGained": 1,
+          "followersLost": 0,
+          "organicReach": 5603,
+          "paidReach": 0,
+          "organicImpressions": 11464,
+          "paidImpressions": 0,
+          "organicEngagement": 346,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-15",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 0,
+          "paidReach": 0,
+          "organicImpressions": 0,
+          "paidImpressions": 0,
+          "organicEngagement": 0,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-16",
+          "followers": 0,
+          "followersGained": 5,
+          "followersLost": 0,
+          "organicReach": 8043,
+          "paidReach": 0,
+          "organicImpressions": 13303,
+          "paidImpressions": 0,
+          "organicEngagement": 1075,
+          "paidEngagement": 0,
+          "adSpend": 0
+        },
+        {
+          "date": "2026-08-17",
+          "followers": 0,
+          "followersGained": 0,
+          "followersLost": 0,
+          "organicReach": 1072,
+          "paidReach": 0,
+          "organicImpressions": 2075,
+          "paidImpressions": 0,
+          "organicEngagement": 188,
+          "paidEngagement": 0,
+          "adSpend": 0
+        }
+      ]
+    }
+  ],
+  "audience": [
+    {
+      "accountId": "acc-ig-neon",
+      "insight": {
+        "available": false,
+        "unavailableReason": "O perfil de público não vem na exportação de conteúdo. Ele chega quando a conta for conectada por OAuth.",
+        "newFollowers": 10,
+        "unfollows": 0,
+        "demografia": [],
+        "topInteractors": [],
+        "activityByHour": [],
+        "topCities": []
+      }
+    }
+  ],
+  "posts": [
+    {
+      "id": "ig-18147807823543684",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon"
+      ],
+      "format": "imagem",
+      "caption": "Não quero levar ao Parlamento um projeto individual. Quero construir um mandato capaz de fazer o Estado enxergar quem ele deixou na invisibilidade. Porque existir é um direito. Sonhar é uma potência. E realizar é uma tarefa coletiva. É com essa visão que coloco meu nome na disputa por uma cadeira na Assembleia Legislativa de São Paulo. Um mandato que não seja sobre uma pessoa só, mas sobre a possibilidade de construir, junto, um Estado que reconheça mais histórias, mais vozes e mais vidas. Neon Cunha Candidata a deputada estadual por São Paulo. #neoncunha #parailuminarsaopaulo #deputadaestadual #SaoPaulo #SP #direitoshumanos #Representatividade #política #participacaopopular",
+      "media": {
+        "count": 1,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 0
+      },
+      "status": "publicado",
+      "scheduledFor": null,
+      "publishedAt": "2026-08-17T12:11:00.000Z",
+      "createdBy": "user-conteudo",
+      "approvedBy": "user-campanha",
+      "requiresApproval": true,
+      "metrics": {
+        "reach": 268,
+        "impressions": 523,
+        "likes": 40,
+        "comments": 1,
+        "shares": 1,
+        "saves": 0
+      },
+      "coverGradient": "linear-gradient(135deg, oklch(0.62 0.14 165), oklch(0.4 0.12 200))"
+    },
+    {
+      "id": "ig-17891614989607162",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon"
+      ],
+      "format": "imagem",
+      "caption": "Existir é ocupar o mundo sem pedir licença. Sonhar é reconhecer que a realidade não termina nos limites que tentaram nos impor. Realizar é dar forma, direção e vida concreta ao que um dia parecia impossível. O sonho não nos afasta da realidade. Ele amplia aquilo que a realidade pode ser. É dessa força que nascem conquistas, direitos e novos caminhos para vidas que se recusam a aceitar a invisibilidade como destino. Sonhar é abrir uma possibilidade. Realizar é ter a coragem de transformá-la em futuro. Neon Cunha 13913 Para iluminar São Paulo. EXISTIR. SONHAR. REALIZAR. #neoncunha #parailuminarsaopaulo #deputadaestadual #sãopaulo #SP #direitoshumanos #representatividade #política #participacaopopular",
+      "media": {
+        "count": 1,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 0
+      },
+      "status": "publicado",
+      "scheduledFor": null,
+      "publishedAt": "2026-08-17T12:06:00.000Z",
+      "createdBy": "user-conteudo",
+      "approvedBy": "user-campanha",
+      "requiresApproval": true,
+      "metrics": {
+        "reach": 804,
+        "impressions": 1552,
+        "likes": 132,
+        "comments": 6,
+        "shares": 8,
+        "saves": 0
+      },
+      "coverGradient": "linear-gradient(135deg, oklch(0.58 0.15 250), oklch(0.38 0.14 280))"
+    },
+    {
+      "id": "ig-17947572000083291",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon"
+      ],
+      "format": "imagem",
+      "caption": "Nenhuma estrela sozinha forma uma constelação. É quando muitas luzes se encontram que o horizonte muda. A nossa campanha começa agora. Nasce de uma vida inteira de trabalho e luta por dignidade, mas não é um projeto individual. É um convite a todas as pessoas que acreditam em uma política capaz de enxergar cada vida e transformar direitos em realidade. Traga sua voz, sua história, seus sonhos e sua força. Cada apoio fortalece essa constelação. Neon Cunha 13913. Para iluminar São Paulo. EXISTIR. SONHAR. REALIZAR. #neoncunha #parailuminarsaopaulo #deputadaestadual #sãopaulo #SP #direitoshumanos #representatividade #política #participacaopopular",
+      "media": {
+        "count": 1,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 0
+      },
+      "status": "publicado",
+      "scheduledFor": null,
+      "publishedAt": "2026-08-16T05:31:00.000Z",
+      "createdBy": "user-conteudo",
+      "approvedBy": "user-campanha",
+      "requiresApproval": true,
+      "metrics": {
+        "reach": 8043,
+        "impressions": 13303,
+        "likes": 899,
+        "comments": 83,
+        "shares": 71,
+        "saves": 22
+      },
+      "coverGradient": "linear-gradient(135deg, oklch(0.68 0.16 75), oklch(0.45 0.14 30))"
+    },
+    {
+      "id": "ig-18090578537125042",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon"
+      ],
+      "format": "carrossel",
+      "caption": "Direito à Cidade LGBT+ | Debate no IABsp Como pensar o direito à cidade a partir das experiências e dos corpos LGBTQIAPN+? No dia 18 de agosto, o IABsp promove uma conversa sobre as relações entre diversidade, território, memória, políticas públicas e produção do espaço urbano. O debate aborda questões como gentrificação, permanência nos territórios, memória e patrimônio, moradia, segurança e mobilidade, além das interseções entre gênero, sexualidade, raça, classe e idade. Participam Cássia Caneco, diretora-executiva do Instituto Pólis; Nabil Bonduki, arquiteto, urbanista e professor da FAU-USP; Neon Cunha, ativista e diretora de arte; e Rafael Gonzaga, comunicador e ativista LGBTQIA+. Mediação de Leandro Fontana, vice-presidente do IABsp, e Maitê Lopes Bessa, do GT Corpo e Espacialidades LGBTQIAPN+ do IABsp. 18 de agosto, às 19h IABsp – Rua Bento Freitas, 306, 1º andar Entrada gratuita",
+      "media": {
+        "count": 3,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 0
+      },
+      "status": "publicado",
+      "scheduledFor": null,
+      "publishedAt": "2026-08-14T20:34:00.000Z",
+      "createdBy": "user-conteudo",
+      "approvedBy": "user-campanha",
+      "requiresApproval": true,
+      "metrics": {
+        "reach": 5603,
+        "impressions": 11464,
+        "likes": 238,
+        "comments": 6,
+        "shares": 102,
+        "saves": 0
+      },
+      "coverGradient": "linear-gradient(135deg, oklch(0.62 0.19 10), oklch(0.4 0.16 300))"
+    },
+    {
+      "id": "ig-17871876639562814",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon"
+      ],
+      "format": "imagem",
+      "caption": "SALVE A DATA – 19 DE AGOSTO, ÀS 19H No dia 19 de agosto, nosso bonde se encontra para mostrar que não queremos apenas mudar a fotografia do poder. Queremos transformar as prioridades e a forma de decidir. Neon Cunha honra o legado de Marielle Franco e de tantas outras mulheres negras e indígenas potentes, com as mais diversas trajetórias e condições. É hora de fazer o Estado enxergar, proteger e garantir direitos a quem historicamente foi deixado de fora. Venha fortalecer este projeto político de pertencimento e justiça racial! 📍 Coloque na agenda e aguarde mais informações.",
+      "media": {
+        "count": 1,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 0
+      },
+      "status": "publicado",
+      "scheduledFor": null,
+      "publishedAt": "2026-08-05T13:32:00.000Z",
+      "createdBy": "user-conteudo",
+      "approvedBy": "user-campanha",
+      "requiresApproval": true,
+      "metrics": {
+        "reach": 1657,
+        "impressions": 3172,
+        "likes": 238,
+        "comments": 11,
+        "shares": 10,
+        "saves": 6
+      },
+      "coverGradient": "linear-gradient(135deg, oklch(0.62 0.14 165), oklch(0.4 0.12 200))"
+    },
+    {
+      "id": "ig-17958909788980705",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon"
+      ],
+      "format": "carrossel",
+      "caption": "Pedimos licença para chegar e abrir os caminhos deste mês de agosto, com muito respeito e admiração por quem veio antes de nós. O Festival Perifericu homenageia cinco personalidades que transformaram suas caminhadas de luta em legados de resistência, dando seus nomes aos prêmios desta edição. São elus: 🏆 Prêmio Linn da Quebrada como Melhor Filme pela Mostra Escolar 🏆 Prêmio Neon Cunha como Melhor Roteiro 🏆 Prêmio Dona Madalena como Filme Mais Revolucionário 🏆 Prêmio Leo Moreira Sá como Melhor Filme pelo Público 🏆 Prêmio Seu Escurinho como Melhor Filme pelo Júri A diva e artista por trás da arte dos nossos troféus é a @kellyndapc 🏆 ➡️ Passe para o lado e conheça um pouco da trajetória e do legado de cada um delus. 🗣️Do dia 1º a 6 de setembro, acontece a 2ª edição do Festival Internacional de Cinema e Cultura de Quebrada - PERIFERICU. Cola! É gratuito e para todes! 🫰🏿 __________ Descrição das imagens: Carrossel com 7 páginas, com elementos nas cores, azuis, laranja, magenta e verde. A capa tem a foto dos prêmios e os textos “5 PRÊMIOS E 5 - HOMENAGEADES” no centro, e abaixo “honrando quem veio antes de nós e fez da caminhada um legado de resistência” acima “Ministério da Cultura e Maloka Filmes apresentam:” do lado oposto a logo Perifericu e no rodapé “Festival de Cinema e Cultura de Quebrada” nas páginas 2 à 6, fotos dos homenageades com elementos coloridos e com trechos sobre a trajetória de cada um. A última página é a régua das logos: Lei Rouanet; Apoio: Fundação Julita, Bloco do Beco e Ibira Lab; Realização: Maloka Filmes e Ministério da Cultura",
+      "media": {
+        "count": 3,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 0
+      },
+      "status": "publicado",
+      "scheduledFor": null,
+      "publishedAt": "2026-08-04T22:31:00.000Z",
+      "createdBy": "user-conteudo",
+      "approvedBy": "user-campanha",
+      "requiresApproval": true,
+      "metrics": {
+        "reach": 907,
+        "impressions": 2687,
+        "likes": 114,
+        "comments": 8,
+        "shares": 2,
+        "saves": 0
+      },
+      "coverGradient": "linear-gradient(135deg, oklch(0.58 0.15 250), oklch(0.38 0.14 280))"
+    },
+    {
+      "id": "ig-17898219282557884",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon"
+      ],
+      "format": "video",
+      "caption": "@neoncunha é sinônimo de luta e tá pronta para representar com a Bancada dos Trabalhadores e Trabalhadoras na Assembleia Legislativa de São Paulo. Na sua trajetória de vida, sempre olhou para quem mais precisa e para aqueles que sustentam esse país nas costas. É patrona da Casa Neon Cunha, espaço de acolhimento LGBTQIA+, é responsável por iniciativas voltadas à promoção da igualdade, da diversidade e da justiça social. Se já faz tudo isso sem mandato, imagina com. Tamo junto, Neon!",
+      "media": {
+        "count": 1,
+        "aspectRatio": "9:16",
+        "fileSizeMb": 0,
+        "durationSeconds": 139
+      },
+      "status": "publicado",
+      "scheduledFor": null,
+      "publishedAt": "2026-08-03T14:53:00.000Z",
+      "createdBy": "user-conteudo",
+      "approvedBy": "user-campanha",
+      "requiresApproval": true,
+      "metrics": {
+        "reach": 1360,
+        "impressions": 1774,
+        "likes": 96,
+        "comments": 14,
+        "shares": 16,
+        "saves": 0
+      },
+      "coverGradient": "linear-gradient(135deg, oklch(0.68 0.16 75), oklch(0.45 0.14 30))"
+    },
+    {
+      "id": "ig-18071220971706338",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon"
+      ],
+      "format": "imagem",
+      "caption": "Nenhuma estrela sozinha forma uma constelação. Nossa campanha também não. Cada apoio é uma nova luz nessa caminhada. É assim que mais pessoas podem existir com dignidade, sonhar sem pedir licença e realizar seus projetos de vida.Sua contribuição ajuda nossa campanha a chegar mais longe, ocupar mais espaços, conversar com mais pessoas e fortalecer uma política construída de forma coletiva. E, se não for possível contribuir, compartilhe esta campanha. Toda forma de apoio faz diferença.Vamos iluminar São Paulo. Uma estrela de cada vez. Uma constelação de pessoas. *Faça parte dessa constelação.* apoiar.me/neoncunha Link na Bio Neon Cunha Candidata a Deputada Estadual pelo PT em São Paulo",
+      "media": {
+        "count": 1,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 0
+      },
+      "status": "publicado",
+      "scheduledFor": null,
+      "publishedAt": "2026-08-01T14:10:00.000Z",
+      "createdBy": "user-conteudo",
+      "approvedBy": "user-campanha",
+      "requiresApproval": true,
+      "metrics": {
+        "reach": 2019,
+        "impressions": 3423,
+        "likes": 171,
+        "comments": 3,
+        "shares": 10,
+        "saves": 0
+      },
+      "coverGradient": "linear-gradient(135deg, oklch(0.62 0.19 10), oklch(0.4 0.16 300))"
+    },
+    {
+      "id": "post-mpwbp83",
+      "projectId": "proj-campanha",
+      "accountIds": [],
+      "format": "carrossel",
+      "caption": "Caminhada na Vila Nova · 14/08 às 09h00 · Campinas",
+      "media": {
+        "count": 3,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 4.5
+      },
+      "status": "ideia",
+      "scheduledFor": "2026-08-14T09:00:00.000Z",
+      "publishedAt": null,
+      "createdBy": "user-campanha",
+      "approvedBy": null,
+      "requiresApproval": true,
+      "metrics": null,
+      "coverGradient": "linear-gradient(135deg, oklch(0.62 0.19 10), oklch(0.4 0.16 300))",
+      "origemEventoId": "evento-l03gygd"
+    },
+    {
+      "id": "post-cky6x59",
+      "projectId": "proj-campanha",
+      "accountIds": [],
+      "format": "carrossel",
+      "caption": "Caminhada na Vila Nova · 14/08 às 09h00 · Campinas",
+      "media": {
+        "count": 3,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 4.5
+      },
+      "status": "ideia",
+      "scheduledFor": "2026-08-14T09:00:00.000Z",
+      "publishedAt": null,
+      "createdBy": "user-campanha",
+      "approvedBy": null,
+      "requiresApproval": true,
+      "metrics": null,
+      "coverGradient": "linear-gradient(135deg, oklch(0.62 0.19 10), oklch(0.4 0.16 300))",
+      "origemEventoId": "evento-ym8hh9l"
+    },
+    {
+      "id": "post-rmu7uon",
+      "projectId": "proj-campanha",
+      "accountIds": [],
+      "format": "a_definir",
+      "caption": "Caminhada na Vila Nova · 14/08 às 09h00 · Campinas",
+      "media": {
+        "count": 1,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 0
+      },
+      "status": "ideia",
+      "scheduledFor": "2026-08-14T09:00:00.000Z",
+      "publishedAt": null,
+      "createdBy": "user-campanha",
+      "approvedBy": null,
+      "requiresApproval": true,
+      "metrics": null,
+      "coverGradient": "linear-gradient(135deg, oklch(0.62 0.19 10), oklch(0.4 0.16 300))",
+      "origemEventoId": "evento-2jajgtr"
+    },
+    {
+      "id": "post-f3",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon",
+        "acc-fb-neon"
+      ],
+      "format": "video",
+      "caption": "Resposta ao que perguntaram sobre a fila da creche — com o número e a fonte. #educacao",
+      "media": {
+        "count": 1,
+        "aspectRatio": "9:16",
+        "fileSizeMb": 61,
+        "durationSeconds": 48
+      },
+      "status": "aguardando_aprovacao",
+      "scheduledFor": "2026-08-17T19:00:00.000Z",
+      "publishedAt": null,
+      "createdBy": "user-conteudo",
+      "approvedBy": null,
+      "requiresApproval": true,
+      "metrics": null,
+      "coverGradient": "linear-gradient(135deg, oklch(0.55 0.22 30), oklch(0.35 0.18 280))"
+    },
+    {
+      "id": "post-f2",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon"
+      ],
+      "format": "story",
+      "caption": "Lembrete da live de quinta às 20h 📣",
+      "media": {
+        "count": 1,
+        "aspectRatio": "9:16",
+        "fileSizeMb": 1.6
+      },
+      "status": "agendado",
+      "scheduledFor": "2026-08-16T09:00:00.000Z",
+      "publishedAt": null,
+      "createdBy": "user-conteudo",
+      "approvedBy": "user-campanha",
+      "requiresApproval": true,
+      "metrics": null,
+      "coverGradient": "linear-gradient(135deg, oklch(0.7 0.2 150), oklch(0.3 0.15 250))"
+    },
+    {
+      "id": "post-f1",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon",
+        "acc-fb-neon"
+      ],
+      "format": "carrossel",
+      "caption": "O plano para a primeira infância, em cinco cartões. Publicação de amanhã. #proposta #educacao",
+      "media": {
+        "count": 5,
+        "aspectRatio": "4:5",
+        "fileSizeMb": 5.1
+      },
+      "status": "agendado",
+      "scheduledFor": "2026-08-15T12:00:00.000Z",
+      "publishedAt": null,
+      "createdBy": "user-conteudo",
+      "approvedBy": "user-campanha",
+      "requiresApproval": true,
+      "metrics": null,
+      "coverGradient": "linear-gradient(135deg, oklch(0.45 0.2 260), oklch(0.72 0.18 200))"
+    },
+    {
+      "id": "post-f4",
+      "projectId": "proj-campanha",
+      "accountIds": [
+        "acc-ig-neon"
+      ],
+      "format": "imagem",
+      "caption": "Rascunho: card com a agenda da semana.",
+      "media": {
+        "count": 1,
+        "aspectRatio": "1:1",
+        "fileSizeMb": 1.9
+      },
+      "status": "rascunho",
+      "scheduledFor": null,
+      "publishedAt": null,
+      "createdBy": "user-conteudo",
+      "approvedBy": null,
+      "requiresApproval": false,
+      "metrics": null,
+      "coverGradient": "linear-gradient(135deg, oklch(0.68 0.17 200), oklch(0.38 0.16 265))"
+    }
+  ],
+  "boosts": [],
+  "inbox": [
+    {
+      "id": "inbox-1",
+      "accountId": "acc-ig-neon",
+      "kind": "comentario",
+      "authorHandle": "@marcia.oliveira",
+      "authorName": "Márcia Oliveira",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.6 0.21 15), oklch(0.45 0.19 320))",
+      "text": "A caminhada passa pela Vila Sônia também? Queria levar minha mãe pra conhecer.",
+      "postId": "ig-18071220971706338",
+      "receivedAt": "2026-08-14T18:18:22.195Z",
+      "status": "pendente",
+      "assignedTo": null,
+      "replies": [],
+      "relacao": "apoiador",
+      "interacoes": 14
+    },
+    {
+      "id": "inbox-3",
+      "accountId": "acc-ig-neon",
+      "kind": "comentario",
+      "authorHandle": "@juliana.alves",
+      "authorName": "Juliana Alves",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.65 0.2 80), oklch(0.4 0.22 320))",
+      "text": "Chorei com o vídeo da dona Marlene. Compartilhei em três grupos aqui do bairro.",
+      "postId": "ig-17898219282557884",
+      "receivedAt": "2026-08-14T17:25:22.195Z",
+      "status": "pendente",
+      "assignedTo": null,
+      "replies": [],
+      "relacao": "defensor",
+      "interacoes": 31
+    },
+    {
+      "id": "inbox-4",
+      "accountId": "acc-ig-neon",
+      "kind": "comentario",
+      "authorHandle": "@cleber_ferreira",
+      "authorName": "Cleber Ferreira",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.7 0.2 150), oklch(0.3 0.15 250))",
+      "text": "E a creche do Jardim União, tem previsão de vaga pra fevereiro?",
+      "postId": "ig-17958909788980705",
+      "receivedAt": "2026-08-14T16:54:22.195Z",
+      "status": "pendente",
+      "assignedTo": null,
+      "replies": [],
+      "relacao": "nao_seguidor",
+      "interacoes": 1
+    },
+    {
+      "id": "inbox-5",
+      "accountId": "acc-ig-neon",
+      "kind": "mensagem",
+      "authorHandle": "@vaniapereira",
+      "authorName": "Vânia Pereira",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.55 0.22 30), oklch(0.35 0.18 280))",
+      "text": "Boa tarde! Como faço pra ser voluntária na campanha? Moro em Guarulhos.",
+      "postId": "ig-17871876639562814",
+      "receivedAt": "2026-08-14T16:10:22.195Z",
+      "status": "pendente",
+      "assignedTo": null,
+      "replies": [],
+      "relacao": "apoiador",
+      "interacoes": 9
+    },
+    {
+      "id": "inbox-8",
+      "accountId": "acc-ig-neon",
+      "kind": "comentario",
+      "authorHandle": "@thiago.lima",
+      "authorName": "Thiago Lima",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.45 0.2 260), oklch(0.72 0.18 200))",
+      "text": "Respondi a enquete! Quero a live sobre segurança.",
+      "postId": "ig-18090578537125042",
+      "receivedAt": "2026-08-14T11:50:22.195Z",
+      "status": "pendente",
+      "assignedTo": null,
+      "replies": [],
+      "relacao": "seguidor",
+      "interacoes": 3
+    },
+    {
+      "id": "inbox-9",
+      "accountId": "acc-ig-neon",
+      "kind": "mensagem",
+      "authorHandle": "@marcia.oliveira",
+      "authorName": "Márcia Oliveira",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.6 0.21 15), oklch(0.45 0.19 320))",
+      "text": "Onde vai ser a reunião com os comerciantes da zona leste?",
+      "postId": "ig-17947572000083291",
+      "receivedAt": "2026-08-14T09:50:22.195Z",
+      "status": "respondido",
+      "assignedTo": "user-atendimento",
+      "replies": [
+        {
+          "id": "reply-9",
+          "author": "Atendimento",
+          "text": "Oi, Márcia! Vai ser na quarta às 19h, no salão da associação da Vila Curuçá. Te espero lá!",
+          "sentAt": "2026-08-14T10:15:22.195Z"
+        }
+      ],
+      "relacao": "apoiador",
+      "interacoes": 14
+    },
+    {
+      "id": "inbox-11",
+      "accountId": "acc-ig-neon",
+      "kind": "comentario",
+      "authorHandle": "@profa.silvia",
+      "authorName": "Sílvia Nogueira",
+      "avatarGradient": "linear-gradient(135deg, oklch(0.6 0.21 15), oklch(0.45 0.19 320))",
+      "text": "Os cinco compromissos por escrito ficaram ótimos. Isso é o que falta na política.",
+      "postId": "ig-17891614989607162",
+      "receivedAt": "2026-08-14T03:30:22.195Z",
+      "status": "pendente",
+      "assignedTo": null,
+      "replies": [],
+      "relacao": "defensor",
+      "interacoes": 11
+    }
+  ],
+  "eventos": [
+    {
+      "id": "ev-caminhada",
+      "projectId": "proj-campanha",
+      "titulo": "Caminhada na feira da Vila Nova",
+      "descricao": "Ponto de encontro na entrada da feira. Levar material de panfletagem.",
+      "tipo": "agenda",
+      "comecaEm": "2026-08-12T08:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": "São Paulo",
+      "municipioCodigo": null,
+      "responsavel": null,
+      "postIds": [
+        "post-1"
+      ],
+      "origem": "manual",
+      "criadoPor": "user-conteudo",
+      "criadoEm": "2026-07-05T00:00:00.000Z"
+    },
+    {
+      "id": "ev-creche",
+      "projectId": "proj-campanha",
+      "titulo": "Reunião com as mães da creche",
+      "descricao": null,
+      "tipo": "agenda",
+      "comecaEm": "2026-08-08T18:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": "São Paulo",
+      "municipioCodigo": null,
+      "responsavel": null,
+      "postIds": [
+        "post-3"
+      ],
+      "origem": "manual",
+      "criadoPor": "user-conteudo",
+      "criadoEm": "2026-07-05T00:00:00.000Z"
+    },
+    {
+      "id": "ev-depoimento",
+      "projectId": "proj-campanha",
+      "titulo": "Gravação do depoimento da dona Marlene",
+      "descricao": null,
+      "tipo": "gravacao",
+      "comecaEm": "2026-08-05T14:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": "Guarulhos",
+      "municipioCodigo": null,
+      "responsavel": null,
+      "postIds": [
+        "post-4"
+      ],
+      "origem": "manual",
+      "criadoPor": "user-conteudo",
+      "criadoEm": "2026-07-05T00:00:00.000Z"
+    },
+    {
+      "id": "ev-pauta",
+      "projectId": "proj-campanha",
+      "titulo": "Reunião de pauta da semana",
+      "descricao": null,
+      "tipo": "interno",
+      "comecaEm": "2026-08-14T10:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": null,
+      "municipioCodigo": null,
+      "responsavel": null,
+      "postIds": [],
+      "origem": "manual",
+      "criadoPor": "user-conteudo",
+      "criadoEm": "2026-07-05T00:00:00.000Z"
+    },
+    {
+      "id": "ev-comerciantes",
+      "projectId": "proj-campanha",
+      "titulo": "Reunião com comerciantes da zona leste",
+      "descricao": "Salão da associação da Vila Curuçá.",
+      "tipo": "agenda",
+      "comecaEm": "2026-08-15T19:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": "São Paulo",
+      "municipioCodigo": null,
+      "responsavel": null,
+      "postIds": [],
+      "origem": "manual",
+      "criadoPor": "user-conteudo",
+      "criadoEm": "2026-07-05T00:00:00.000Z"
+    },
+    {
+      "id": "ev-prazo-infancia",
+      "projectId": "proj-campanha",
+      "titulo": "Prazo do carrossel da primeira infância",
+      "descricao": null,
+      "tipo": "prazo",
+      "comecaEm": "2026-08-15T18:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": null,
+      "municipioCodigo": null,
+      "responsavel": null,
+      "postIds": [],
+      "origem": "manual",
+      "criadoPor": "user-conteudo",
+      "criadoEm": "2026-07-05T00:00:00.000Z"
+    },
+    {
+      "id": "ev-live",
+      "projectId": "proj-campanha",
+      "titulo": "Live sobre educação e fila da creche",
+      "descricao": "Transmissão pelo Instagram e YouTube.",
+      "tipo": "agenda",
+      "comecaEm": "2026-08-16T20:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": null,
+      "municipioCodigo": null,
+      "responsavel": null,
+      "postIds": [],
+      "origem": "manual",
+      "criadoPor": "user-conteudo",
+      "criadoEm": "2026-07-05T00:00:00.000Z"
+    },
+    {
+      "id": "ev-caravana",
+      "projectId": "proj-campanha",
+      "titulo": "Caravana pelo interior",
+      "descricao": null,
+      "tipo": "agenda",
+      "comecaEm": "2026-08-20T07:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": "Campinas",
+      "municipioCodigo": null,
+      "responsavel": null,
+      "postIds": [],
+      "origem": "manual",
+      "criadoPor": "user-conteudo",
+      "criadoEm": "2026-07-05T00:00:00.000Z"
+    },
+    {
+      "id": "ev-abc",
+      "projectId": "proj-campanha",
+      "titulo": "Encontro com apoiadores no ABC",
+      "descricao": null,
+      "tipo": "agenda",
+      "comecaEm": "2026-08-23T19:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": "Santo André",
+      "municipioCodigo": null,
+      "responsavel": null,
+      "postIds": [],
+      "origem": "manual",
+      "criadoPor": "user-conteudo",
+      "criadoEm": "2026-07-05T00:00:00.000Z"
+    },
+    {
+      "id": "evento-2jajgtr",
+      "projectId": "proj-campanha",
+      "titulo": "Caminhada na Vila Nova",
+      "descricao": null,
+      "tipo": "agenda",
+      "comecaEm": "2026-08-14T09:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": "Campinas",
+      "municipioCodigo": "3509502",
+      "responsavel": null,
+      "postIds": [
+        "post-rmu7uon"
+      ],
+      "origem": "manual",
+      "criadoPor": "user-campanha",
+      "criadoEm": "2026-08-14T23:06:37.038Z"
+    },
+    {
+      "id": "evento-ym8hh9l",
+      "projectId": "proj-campanha",
+      "titulo": "Caminhada na Vila Nova",
+      "descricao": null,
+      "tipo": "agenda",
+      "comecaEm": "2026-08-14T09:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": "Campinas",
+      "municipioCodigo": "3509502",
+      "responsavel": null,
+      "postIds": [
+        "post-cky6x59"
+      ],
+      "origem": "manual",
+      "criadoPor": "user-campanha",
+      "criadoEm": "2026-08-14T23:07:28.083Z"
+    },
+    {
+      "id": "evento-l03gygd",
+      "projectId": "proj-campanha",
+      "titulo": "Caminhada na Vila Nova",
+      "descricao": null,
+      "tipo": "agenda",
+      "comecaEm": "2026-08-14T09:00:00.000Z",
+      "terminaEm": null,
+      "diaInteiro": false,
+      "local": "Campinas",
+      "municipioCodigo": "3509502",
+      "responsavel": null,
+      "postIds": [
+        "post-mpwbp83"
+      ],
+      "origem": "manual",
+      "criadoPor": "user-campanha",
+      "criadoEm": "2026-08-14T23:08:09.116Z"
+    }
+  ],
+  "reports": [],
+  "atualizacoes": []
+}
