@@ -9,17 +9,22 @@
 # plano gratuito do GitHub Actions cobre folgadamente três por dia.
 name: Publicar HTML
 
+# Só à mão, pela aba Actions.
+#
+# Era automático a cada push, e num repositório onde o GitHub Pages não está
+# ligado isso significa uma execução vermelha a cada commit — ruído que ensina
+# a ignorar o sinal justamente quando ele passa a valer.
+#
+# A hospedagem de verdade deste projeto é um processo Node (veja
+# `docs/hospedagem.md`); o HTML único é um extra, para mandar a plataforma por
+# link sem servidor. Quando o Pages estiver ligado em Settings → Pages com a
+# origem "GitHub Actions", basta devolver o bloco `push:` abaixo.
+#
+#  push:
+#    branches: [main]
+#    paths: ["dados/**", "src/**", "scripts/build-html.mjs", "index.static.html",
+#            "vite.static.config.ts", "package.json"]
 on:
-  push:
-    branches: [main]
-    paths:
-      - "dados/**"
-      - "src/**"
-      - "scripts/build-html.mjs"
-      - "index.static.html"
-      - "vite.static.config.ts"
-      - "package.json"
-  # Permite disparar à mão pela aba Actions, sem precisar de um commit.
   workflow_dispatch:
 
 permissions:

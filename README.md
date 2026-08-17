@@ -6,6 +6,7 @@ impulsionar e responder comentários e mensagens de várias contas a partir de u
 O escopo é deliberadamente restrito à camada social (orgânico e pago) — sem e-commerce, catálogo,
 carrinho ou qualquer fluxo de vendas.
 
+- [Subir na Hostinger](./docs/deploy-hostinger.md) — o passo a passo desta instalação
 - [PRD completo](./docs/prd-plataforma-social.md)
 - [Arquitetura e estado atual](./docs/arquitetura-social.md) — inclui o que já é real e o que
   ainda é simulado neste estágio

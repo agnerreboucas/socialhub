@@ -194,11 +194,11 @@ aceite uma imagem — Render, Railway, Fly, Cloud Run, Coolify, ou um Docker
 Compose no servidor da agência:
 
 ```bash
-docker build -t ampliacao-social .
+docker build -t socialhub .
 docker run -p 3000:3000 \
   -e NODE_ENV=production -e DATABASE_URL=... \
   -e SESSION_SECRET=... -e ADMIN_EMAIL=... \
-  ampliacao-social
+  socialhub
 ```
 
 A imagem final leva só o pacote gerado e o driver do Postgres; TypeScript,
