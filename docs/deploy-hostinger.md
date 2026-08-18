@@ -158,9 +158,15 @@ de pé.
 
 ## O que ainda depende de você
 
-- **Trocar a senha `@EleitaEm2026`.** Ela está em commits já publicados dos
-  repositórios `retail-wave-ai` e `ampliacao-social`. Este repositório nasceu
-  sem esse histórico, mas o que já foi ao GitHub não volta atrás.
+- **Trocar a senha do administrador.** A que foi usada até agora entrou por
+  engano num arquivo de teste e está em commits já publicados dos repositórios
+  `retail-wave-ai` e `ampliacao-social`. Este repositório nasceu sem esse
+  histórico, mas o que já foi ao GitHub não volta atrás — considere aquela senha
+  queimada e defina outra com `npm run senha`.
+
+  > O valor dela não se repete aqui de propósito. Escrever uma senha vazada na
+  > documentação é republicá-la: o arquivo vai para o Git, para o zip que alguém
+  > baixa e para qualquer busca no repositório.
 - **Informar o total de seguidores.** A exportação de conteúdo do Instagram diz
   quantos seguidores cada publicação gerou, não quantos a conta tem. O número
   fica em zero até alguém preencher — um zero visível é melhor do que um número
