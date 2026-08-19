@@ -114,6 +114,12 @@ export function MapaDeSaoPaulo({
     [pontos],
   );
 
+  /** A régua do tamanho dos círculos: a maior população do estado. */
+  const maiorPopulacao = useMemo(
+    () => Math.max(...pontos.map((ponto) => ponto.municipio.populacao ?? 0), 1),
+    [pontos],
+  );
+
   /**
    * O território de cada município, casado por índice.
    *
@@ -188,31 +194,63 @@ export function MapaDeSaoPaulo({
   const emDestaque =
     sobre ?? pontos.find((ponto) => ponto.municipio.codigo === selecionado) ?? null;
 
-  const desenhar = (escala: number, chave: string) =>
-    territorios.map(({ ponto, contorno }) => {
-      if (contorno.length < 3) return null;
-      const estaSelecionado = ponto.municipio.codigo === selecionado;
-      const sobDoMouse = sobre?.municipio.codigo === ponto.municipio.codigo;
+  /**
+   * O raio de cada círculo, pela população.
+   *
+   * **Raiz quadrada, não proporção direta.** O olho compara círculos pela
+   * área, não pelo raio: dobrar o raio quadruplica a mancha, e uma cidade com
+   * o dobro de gente pareceria ter quatro vezes mais. A raiz faz a área — que é
+   * o que se enxerga — crescer junto com a população.
+   *
+   * Piso de 2px porque um círculo menor que isso some e deixa de ser clicável,
+   * e cidade pequena que some do mapa é cidade que a campanha esquece.
+   */
+  const raio = (ponto: PontoNoMapa, escala: number) => {
+    const populacao = ponto.municipio.populacao ?? 0;
+    const fracao = Math.sqrt(populacao / maiorPopulacao);
+    return Math.max(2, fracao * escala * 0.035);
+  };
 
-      return (
-        <path
-          key={`${chave}-${ponto.municipio.codigo}`}
-          d={`M${contorno.map(([x, y]) => `${(x * escala).toFixed(1)},${(y * escala).toFixed(1)}`).join("L")}Z`}
-          fill={cor(ponto)}
-          stroke={
-            estaSelecionado || sobDoMouse ? "var(--color-foreground)" : "rgba(255,255,255,0.55)"
-          }
-          strokeWidth={estaSelecionado ? 2.4 : sobDoMouse ? 1.8 : 0.6}
-          strokeLinejoin="round"
-          className="cursor-pointer transition-[stroke-width]"
-          onMouseEnter={() => setSobre(ponto)}
-          onMouseLeave={() => setSobre(null)}
-          onClick={() => onSelecionar(estaSelecionado ? null : ponto.municipio.codigo)}
-        >
-          <title>{ponto.municipio.nome}</title>
-        </path>
-      );
-    });
+  /**
+   * As cidades, em círculos.
+   *
+   * Eram polígonos de Voronoi — a área mais próxima de cada sede. Bonito, e
+   * enganoso: aquilo desenha divisas que não existem, e num mapa de campanha
+   * alguém acaba lendo o traço como limite de município. O círculo não promete
+   * fronteira nenhuma; ele diz "a cidade fica aqui e tem este tamanho", que é
+   * exatamente o que o dado sustenta.
+   *
+   * Desenhados do menor para o maior, para que o círculo pequeno não fique
+   * escondido embaixo do grande — sem isso, os municípios do entorno de São
+   * Paulo desapareceriam sob a capital.
+   */
+  const desenhar = (escala: number, chave: string, fatorDoRaio = 1) =>
+    [...territorios]
+      .sort((a, b) => (b.ponto.municipio.populacao ?? 0) - (a.ponto.municipio.populacao ?? 0))
+      .map(({ ponto }) => {
+        const estaSelecionado = ponto.municipio.codigo === selecionado;
+        const sobDoMouse = sobre?.municipio.codigo === ponto.municipio.codigo;
+        const destacado = estaSelecionado || sobDoMouse;
+
+        return (
+          <circle
+            key={`${chave}-${ponto.municipio.codigo}`}
+            cx={ponto.x * escala}
+            cy={ponto.y * escala}
+            r={raio(ponto, escala) * fatorDoRaio * (destacado ? 1.35 : 1)}
+            fill={cor(ponto)}
+            fillOpacity={0.85}
+            stroke={destacado ? "var(--color-foreground)" : "rgba(255,255,255,0.7)"}
+            strokeWidth={estaSelecionado ? 2 : sobDoMouse ? 1.5 : 0.5}
+            className="cursor-pointer transition-all"
+            onMouseEnter={() => setSobre(ponto)}
+            onMouseLeave={() => setSobre(null)}
+            onClick={() => onSelecionar(estaSelecionado ? null : ponto.municipio.codigo)}
+          >
+            <title>{ponto.municipio.nome}</title>
+          </circle>
+        );
+      });
 
   const capital = pontos.find((ponto) => ponto.ehCapital);
 
@@ -223,18 +261,23 @@ export function MapaDeSaoPaulo({
           viewBox={`0 0 ${LARGURA} ${ALTURA}`}
           className="w-full"
           role="img"
-          aria-label={`Mapa do estado de São Paulo com ${pontos.length} municípios em territórios, coloridos por ${visao === "prioridade" ? "prioridade" : "alcance da campanha"}.`}
+          aria-label={`Mapa do estado de São Paulo com ${pontos.length} municípios em círculos proporcionais à população, coloridos por ${visao}.`}
         >
-          {/* O recorte é o que dá ao mapa o formato do estado. Os territórios
-              transbordam de propósito e o contorno apara — assim não sobra fio
-              branco entre o último município e a borda. */}
-          <defs>
-            <clipPath id="contorno-do-estado" clipPathUnits="userSpaceOnUse">
-              <path d={escalarCaminho(CONTORNO_SP, LARGURA)} />
-            </clipPath>
-          </defs>
+          {/* O corpo do estado, por baixo de tudo.
+              Com círculos em vez de polígonos, alguma coisa precisa dar forma ao
+              mapa — sem este preenchimento sobrariam pontos flutuando sem
+              contexto, e ninguém reconheceria São Paulo. O tom é bem lavado de
+              propósito: é fundo, não informação. */}
+          <path
+            d={escalarCaminho(CONTORNO_SP, LARGURA)}
+            fill="var(--color-secondary)"
+            stroke="none"
+          />
 
-          <g clipPath="url(#contorno-do-estado)">{desenhar(LARGURA, "estado")}</g>
+          {/* Os círculos não são recortados pelo contorno. Uma cidade na divisa
+              teria o círculo cortado ao meio, e o corte pareceria dado — como se
+              metade dela estivesse fora do estado. */}
+          {desenhar(LARGURA, "estado")}
 
           {/* Os rótulos das primeiras cidades, como num mapa impresso.
               Só nas visões territoriais e só no topo do ranking: escrever os 645
@@ -335,7 +378,21 @@ export function MapaDeSaoPaulo({
             role="img"
             aria-label="Recorte ampliado da região metropolitana de São Paulo."
           >
-            <g clipPath="url(#contorno-do-estado)">{desenhar(LARGURA, "metro")}</g>
+            {/* O mesmo fundo do mapa grande, para o recorte não ficar sobre o
+                branco do cartão. Sem recorte por contorno: aqui a janela já é
+                um retângulo dentro do estado. */}
+            <path
+              d={escalarCaminho(CONTORNO_SP, LARGURA)}
+              fill="var(--color-secondary)"
+              stroke="none"
+            />
+            {/* Raio reduzido no recorte.
+                A janela amplia a geografia cerca de nove vezes, e o círculo vem
+                junto: em tamanho cheio a Grande São Paulo virava uma mancha só,
+                que é o oposto do que um recorte ampliado serve para mostrar. Um
+                quarto do raio dá círculos ainda maiores que no mapa inteiro,
+                com espaço entre eles. */}
+            {desenhar(LARGURA, "metro", 0.25)}
             {capital ? (
               <circle
                 cx={capital.x * LARGURA}
@@ -406,7 +463,7 @@ function Legenda({ visao }: { visao: Visao }) {
           <Amostra cor="#0d9488">muitas</Amostra>
         </>
       )}
-      <span className="ml-auto">Territórios aproximados pela sede — não são divisas oficiais.</span>
+      <span className="ml-auto">Círculo pela população, na posição da sede municipal.</span>
     </div>
   );
 }
