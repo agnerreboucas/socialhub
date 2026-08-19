@@ -2,6 +2,14 @@ import { useMemo, useState } from "react";
 
 import { FAIXAS_IPS, PROPORCAO_DO_MAPA, faixaDoIps, type PontoNoMapa } from "@/lib/social/mapa";
 import { CONTORNO_SP, MALHA_SP } from "@/lib/social/malha-sp";
+import {
+  CAMADAS,
+  EIXOS,
+  camadaDaPosicao,
+  eixosDoMunicipio,
+  type CamadaId,
+  type EixoId,
+} from "@/lib/social/territorio";
 import { formatCompact, formatCurrency, formatNumber } from "@/lib/social/format";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +36,45 @@ import { cn } from "@/lib/utils";
  * que não dá para ler.
  */
 
-export type Visao = "prioridade" | "alcance";
+/**
+ * Os quatro jeitos de ler o mesmo desenho.
+ *
+ * `prioridade` e `alcance` respondem "onde deveria estar" e "onde estou".
+ * `camada` e `eixo` vieram com a estratégia territorial: a primeira mostra a
+ * expansão por camadas — Top 100, 200, 300 e o resto —, e a segunda pinta o
+ * Top 100 pela pauta que abre porta em cada cidade.
+ */
+export type Visao = "prioridade" | "alcance" | "camada" | "eixo";
+
+/**
+ * A cor de cada camada, do mais forte ao mais claro.
+ *
+ * A escala é de uma cor só, variando a intensidade, porque camada é ordem: dar
+ * quatro matizes diferentes faria parecer que são quatro categorias
+ * independentes, quando a segunda é o passo depois da primeira.
+ */
+const COR_DA_CAMADA: Record<CamadaId, string> = {
+  top100: "#0f766e",
+  top200: "#2dd4bf",
+  top300: "#99f6e4",
+  cobertura: "#e7e5e4",
+};
+
+/**
+ * A cor de cada eixo.
+ *
+ * Aqui, sim, matizes distintos: os sete eixos são categorias sem ordem entre
+ * si, e uma escala de intensidade sugeriria uma hierarquia que não existe.
+ */
+const COR_DO_EIXO: Record<EixoId, string> = {
+  educacao: "#2563eb",
+  saude: "#dc2626",
+  cultura: "#9333ea",
+  trabalho: "#ea580c",
+  direitos: "#db2777",
+  cidade: "#059669",
+  rede: "#ca8a04",
+};
 
 const LARGURA = 1000;
 const ALTURA = Math.round(LARGURA * PROPORCAO_DO_MAPA);
@@ -81,6 +127,18 @@ export function MapaDeSaoPaulo({
   );
 
   const cor = (ponto: PontoNoMapa) => {
+    if (visao === "camada") {
+      const camada = camadaDaPosicao(ponto.municipio.posicao);
+      // Sem posição no IPS não há camada — e o cinza diz isso, em vez de
+      // empurrar o município para a última camada como se tivesse sido avaliado.
+      return camada ? COR_DA_CAMADA[camada.id] : CINZA_SEM_ENTREGA;
+    }
+    if (visao === "eixo") {
+      const eixos = eixosDoMunicipio(ponto.municipio);
+      // Só o Top 100 tem leitura estratégica. O resto fica cinza de propósito:
+      // é o que faz a primeira camada saltar do mapa.
+      return eixos.length > 0 ? COR_DO_EIXO[eixos[0].id] : CINZA_SEM_ENTREGA;
+    }
     if (visao === "prioridade") {
       // A capital não tem nota porque é a régua: o índice inteiro mede
       // distância até ela. Pintá-la de cinza de "sem dado" diria o contrário.
@@ -91,6 +149,41 @@ export function MapaDeSaoPaulo({
     const intensidade = Math.sqrt(ponto.alcance / maiorAlcance);
     return `color-mix(in oklch, #0d9488 ${Math.round(30 + intensidade * 70)}%, #ccfbf1)`;
   };
+
+  /**
+   * As cidades que ganham nome escrito no mapa.
+   *
+   * Doze é o número que cabe sem virar sopa de letras num estado deste formato
+   * — testado aumentando até os rótulos começarem a se sobrepor. E só nas
+   * visões territoriais, porque é nelas que a pergunta é "que cidade é essa?";
+   * nas de prioridade e alcance a pergunta é sobre a cor, e o nome aparece no
+   * passar do mouse.
+   */
+  const rotulados = useMemo(() => {
+    if (visao !== "camada" && visao !== "eixo") return [];
+
+    // Guloso, em ordem de ranking: a cidade só recebe nome se estiver longe o
+    // bastante de outra já rotulada. Sem isto, metade dos doze primeiros cai na
+    // Grande São Paulo e os nomes viram um borrão — que foi exatamente o que
+    // aconteceu na primeira versão. Assim o mapa rotula polos espalhados, como
+    // faz um mapa impresso.
+    const DISTANCIA_MINIMA = 0.055;
+    const escolhidos: typeof territorios = [];
+
+    for (const item of [...territorios].sort(
+      (a, b) => (a.ponto.municipio.posicao ?? 999) - (b.ponto.municipio.posicao ?? 999),
+    )) {
+      if ((item.ponto.municipio.posicao ?? 999) > 40) break;
+      const colide = escolhidos.some(
+        (outro) =>
+          Math.hypot(outro.ponto.x - item.ponto.x, outro.ponto.y - item.ponto.y) < DISTANCIA_MINIMA,
+      );
+      if (!colide) escolhidos.push(item);
+      if (escolhidos.length >= 12) break;
+    }
+
+    return escolhidos;
+  }, [territorios, visao]);
 
   const emDestaque =
     sobre ?? pontos.find((ponto) => ponto.municipio.codigo === selecionado) ?? null;
@@ -142,6 +235,31 @@ export function MapaDeSaoPaulo({
           </defs>
 
           <g clipPath="url(#contorno-do-estado)">{desenhar(LARGURA, "estado")}</g>
+
+          {/* Os rótulos das primeiras cidades, como num mapa impresso.
+              Só nas visões territoriais e só no topo do ranking: escrever os 645
+              nomes cobriria o desenho, e a referência que originou esta tela
+              rotula justamente os polos, não tudo. */}
+          {rotulados.length > 0 ? (
+            <g className="pointer-events-none">
+              {rotulados.map(({ ponto }) => (
+                <text
+                  key={`rotulo-${ponto.municipio.codigo}`}
+                  x={ponto.x * LARGURA}
+                  y={ponto.y * LARGURA - 6}
+                  textAnchor="middle"
+                  className="fill-foreground text-[10px] font-medium"
+                  style={{
+                    paintOrder: "stroke",
+                    stroke: "var(--color-background)",
+                    strokeWidth: 3,
+                  }}
+                >
+                  {ponto.municipio.nome}
+                </text>
+              ))}
+            </g>
+          ) : null}
 
           <path
             d={escalarCaminho(CONTORNO_SP, LARGURA)}
@@ -250,7 +368,27 @@ function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode
 function Legenda({ visao }: { visao: Visao }) {
   return (
     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
-      {visao === "prioridade" ? (
+      {visao === "camada" ? (
+        <>
+          <span>Camada de expansão:</span>
+          {CAMADAS.map((camada) => (
+            <Amostra key={camada.id} cor={COR_DA_CAMADA[camada.id]}>
+              {camada.id === "cobertura" ? "301–645" : `Top ${camada.ate}`}
+            </Amostra>
+          ))}
+          <Amostra cor={CINZA_SEM_ENTREGA}>sem posição no IPS</Amostra>
+        </>
+      ) : visao === "eixo" ? (
+        <>
+          <span>Eixo de entrada:</span>
+          {EIXOS.map((eixo) => (
+            <Amostra key={eixo.id} cor={COR_DO_EIXO[eixo.id]}>
+              {eixo.nome.split(",")[0].split(" e ")[0]}
+            </Amostra>
+          ))}
+          <Amostra cor={CINZA_SEM_ENTREGA}>fora do Top 100</Amostra>
+        </>
+      ) : visao === "prioridade" ? (
         <>
           <span>Nota do IPS:</span>
           {[...FAIXAS_IPS].reverse().map((faixa) => (

@@ -15,6 +15,8 @@ import {
   formatPercent,
 } from "@/lib/social/format";
 import { diaPorExtenso, nomeDoFormato } from "@/lib/social/rastreio";
+import type { Municipio } from "@/lib/social/municipios-sp";
+import { NIVEIS_DE_PRESENCA, RESSALVA_DO_IPS, fichaDoMunicipio } from "@/lib/social/territorio";
 import { useSocialSession } from "@/lib/social/session";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +25,44 @@ export const Route = createFileRoute("/social/mapa")({
 });
 
 const QUANTOS_PRIORITARIOS = [25, 50, 100] as const;
+
+const TITULO_DA_VISAO: Record<Visao, string> = {
+  prioridade: "Onde a campanha deveria estar",
+  alcance: "Onde a campanha está",
+  camada: "As camadas de expansão",
+  eixo: "Por onde entrar em cada cidade",
+};
+
+const DESCRICAO_DA_VISAO: Record<Visao, string> = {
+  prioridade:
+    "Cor pela nota do IPS — quanto mais escuro, mais parecido com a capital. O anel marca a capital, que é a referência do índice.",
+  alcance: "Cor pelo alcance dos anúncios segmentados. Cinza é município sem nenhuma entrega.",
+  camada:
+    "Top 100, 200, 300 e cobertura ampliada. A intensidade é a ordem da expansão, não quatro categorias soltas.",
+  eixo: "A pauta que abre porta em cada cidade do Top 100. Cinza é município fora da primeira camada.",
+};
+
+/**
+ * As quatro leituras do mesmo desenho.
+ *
+ * "Prioridade" e "alcance" já existiam e respondem onde deveria estar e onde
+ * está. "Camadas" e "eixos" vieram com o anexo territorial: a expansão por
+ * camadas e a pauta que abre porta em cada cidade do Top 100.
+ */
+const VISOES: { id: Visao; rotulo: string; explica: string }[] = [
+  { id: "prioridade", rotulo: "Prioridade", explica: "O índice de proximidade com a capital." },
+  { id: "alcance", rotulo: "Alcance", explica: "Onde a campanha chegou de fato." },
+  {
+    id: "camada",
+    rotulo: "Camadas",
+    explica: "A expansão por camadas: Top 100, 200, 300 e cobertura ampliada.",
+  },
+  {
+    id: "eixo",
+    rotulo: "Eixos",
+    explica: "A pauta que abre porta em cada cidade do Top 100.",
+  },
+];
 
 /**
  * O estado de São Paulo, com o que a campanha alcançou nele.
@@ -56,19 +96,20 @@ function MapaPage() {
         description="Os 645 municípios do estado, e onde a campanha está chegando."
         actions={
           <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card/60 p-1">
-            {(["prioridade", "alcance"] as const).map((opcao) => (
+            {VISOES.map((opcao) => (
               <button
-                key={opcao}
+                key={opcao.id}
                 type="button"
-                onClick={() => setVisao(opcao)}
+                onClick={() => setVisao(opcao.id)}
+                title={opcao.explica}
                 className={cn(
-                  "rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors",
-                  visao === opcao
+                  "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                  visao === opcao.id
                     ? "bg-foreground text-background"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {opcao}
+                {opcao.rotulo}
               </button>
             ))}
           </div>
@@ -122,14 +163,8 @@ function MapaPage() {
           </div>
 
           <SectionCard
-            title={
-              visao === "prioridade" ? "Onde a campanha deveria estar" : "Onde a campanha está"
-            }
-            description={
-              visao === "prioridade"
-                ? "Cor pela nota do IPS — quanto mais escuro, mais parecido com a capital. O anel marca a capital, que é a referência do índice."
-                : "Cor pelo alcance dos anúncios segmentados. Cinza é município sem nenhuma entrega."
-            }
+            title={TITULO_DA_VISAO[visao]}
+            description={DESCRICAO_DA_VISAO[visao]}
             icon={MapaIcone}
           >
             <MapaDeSaoPaulo
@@ -271,6 +306,92 @@ function Indicador({
   );
 }
 
+/**
+ * A ficha territorial do anexo, dentro do dossiê do município.
+ *
+ * O anexo pede camada, bloco, eixo de entrada e nível de presença. Os quatro
+ * são derivados — ninguém digita — e por isso aparecem já preenchidos assim que
+ * a cidade é aberta.
+ *
+ * A ressalva do IPS vem junto, e é o motivo de ela existir como constante: um
+ * ranking preliminar mostrado sem ela numa tela vira definitivo na cabeça de
+ * quem leu só aquela tela.
+ */
+function FichaTerritorialDoMunicipio({ municipio }: { municipio: Municipio }) {
+  const ficha = fichaDoMunicipio(municipio);
+  const nivel = NIVEIS_DE_PRESENCA.find((item) => item.id === ficha.presencaSugerida);
+
+  if (!ficha.camada) {
+    return (
+      <p className="rounded-xl border border-border bg-secondary/30 p-3 text-sm text-muted-foreground">
+        Este município não recebeu posição na matriz preliminar do IPS, então não entra em nenhuma
+        camada de expansão ainda. Ele continua no mapa — a ausência de nota é informação, não motivo
+        para escondê-lo.
+      </p>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full bg-foreground px-2.5 py-1 text-xs font-medium text-background">
+          {ficha.camada.id === "cobertura" ? "301–645" : `Top ${ficha.camada.ate}`}
+        </span>
+        {ficha.bloco ? (
+          <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">
+            Bloco {ficha.bloco.numero} · {ficha.bloco.titulo}
+          </span>
+        ) : null}
+        <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">
+          Presença {ficha.presencaSugerida} — {nivel?.nome.toLowerCase()}
+        </span>
+      </div>
+
+      <p className="mt-2 text-sm text-muted-foreground">{ficha.camada.objetivo}</p>
+      {ficha.bloco ? (
+        <p className="mt-1 text-xs text-muted-foreground">{ficha.bloco.leitura}</p>
+      ) : null}
+
+      {ficha.eixos.length > 0 ? (
+        <div className="mt-3">
+          <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
+            Eixo de entrada
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {ficha.eixos.map((eixo, indice) => (
+              <span
+                key={eixo.id}
+                className={cn(
+                  "rounded-lg border px-2 py-1 text-xs",
+                  indice === 0
+                    ? "border-accent/60 bg-accent/10 font-medium text-accent"
+                    : "border-border text-muted-foreground",
+                )}
+                title={eixo.frentes.join(", ")}
+              >
+                {eixo.nome}
+              </span>
+            ))}
+          </div>
+          {/* O que o eixo abre — é a lista de quem procurar no território. */}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Por onde entrar: {ficha.eixos[0].frentes.join(", ")}.
+          </p>
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-muted-foreground">
+          O anexo fez a leitura estratégica só das cem primeiras cidades. Esta ainda não tem eixo de
+          entrada definido — o que é diferente de não ter nenhum.
+        </p>
+      )}
+
+      <p className="mt-3 border-t border-border pt-2 text-[11px] leading-snug text-muted-foreground">
+        {RESSALVA_DO_IPS}
+      </p>
+    </div>
+  );
+}
+
 function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-border/60 pb-1.5">
@@ -353,6 +474,8 @@ function DetalheDoMunicipio({
               origem a deixa de fora.
             </p>
           ) : null}
+
+          <FichaTerritorialDoMunicipio municipio={municipio} />
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Indicador
