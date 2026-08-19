@@ -242,6 +242,11 @@ export function MapaDeSaoPaulo({
             fillOpacity={0.85}
             stroke={destacado ? "var(--color-foreground)" : "rgba(255,255,255,0.7)"}
             strokeWidth={estaSelecionado ? 2 : sobDoMouse ? 1.5 : 0.5}
+            // Tracejado quando o número foi repartido pela plataforma em vez de
+            // medido pela rede. É discreto de propósito — não é erro, é ressalva
+            // —, mas quem for tirar conclusão de uma cidade vai perguntar o que
+            // é aquilo, e a resposta está no detalhe.
+            strokeDasharray={ponto.estimado && visao === "alcance" ? "2 2" : undefined}
             className="cursor-pointer transition-all"
             onMouseEnter={() => setSobre(ponto)}
             onMouseLeave={() => setSobre(null)}
@@ -461,6 +466,19 @@ function Legenda({ visao }: { visao: Visao }) {
           <Amostra cor={CINZA_SEM_ENTREGA}>nenhuma</Amostra>
           <Amostra cor="color-mix(in oklch, #0d9488 55%, #ccfbf1)">algumas</Amostra>
           <Amostra cor="#0d9488">muitas</Amostra>
+          <span className="inline-flex items-center gap-1.5">
+            <svg width="11" height="11" aria-hidden>
+              <circle
+                cx="5.5"
+                cy="5.5"
+                r="4.5"
+                fill="none"
+                stroke="currentColor"
+                strokeDasharray="2 2"
+              />
+            </svg>
+            repartido, não medido
+          </span>
         </>
       )}
       <span className="ml-auto">Círculo pela população, na posição da sede municipal.</span>

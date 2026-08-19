@@ -212,3 +212,100 @@ test("cada nota cai na faixa que corresponde", () => {
 test("município sem nota não recebe cor inventada", () => {
   assert.equal(faixaDoIps(null), null);
 });
+
+// --- Alcance por cidade: medido contra estimado -------------------------------
+
+function impulsionamento(parcial: Partial<Boost> = {}): Boost {
+  return {
+    id: `b-${Math.random().toString(36).slice(2, 8)}`,
+    postId: "post-1",
+    accountId: "acc-1",
+    objective: "alcance",
+    budgetTotal: 1000,
+    durationDays: 7,
+    startedAt: "2026-08-01T00:00:00Z",
+    endsAt: "2026-08-08T00:00:00Z",
+    status: "encerrado",
+    audience: { locations: [], ageMin: 18, ageMax: 65, interests: [] },
+    results: { spend: 1000, reach: 100000, impressions: 150000, engagement: 5000, clicks: 900 },
+    ...parcial,
+  };
+}
+
+test("com a quebra por região, cada cidade recebe o que de fato aconteceu nela", () => {
+  const pontos = montarMapa([
+    impulsionamento({
+      audience: { locations: ["Guarulhos", "Holambra"], ageMin: 18, ageMax: 65, interests: [] },
+      results: {
+        spend: 1000,
+        reach: 100000,
+        impressions: 150000,
+        engagement: 5000,
+        clicks: 900,
+        porLocal: [
+          { local: "Guarulhos", reach: 94000, spend: 940 },
+          { local: "Holambra", reach: 6000, spend: 60 },
+        ],
+      },
+    }),
+  ]);
+
+  const guarulhos = pontos.find((p) => p.municipio.nome === "Guarulhos");
+  const holambra = pontos.find((p) => p.municipio.nome === "Holambra");
+
+  assert.equal(guarulhos?.alcance, 94000);
+  assert.equal(holambra?.alcance, 6000);
+  // Veio da rede: é medido, e a tela pode apresentar como tal.
+  assert.equal(guarulhos?.estimado, false);
+  assert.equal(holambra?.estimado, false);
+});
+
+test("sem a quebra, a divisão igual acontece mas sai marcada como estimativa", () => {
+  const pontos = montarMapa([
+    impulsionamento({
+      audience: { locations: ["Guarulhos", "Holambra"], ageMin: 18, ageMax: 65, interests: [] },
+    }),
+  ]);
+
+  const guarulhos = pontos.find((p) => p.municipio.nome === "Guarulhos");
+  const holambra = pontos.find((p) => p.municipio.nome === "Holambra");
+
+  // Metade para cada — quase certamente errado, porque uma cidade tem cem vezes
+  // a população da outra. Por isso a marca.
+  assert.equal(guarulhos?.alcance, 50000);
+  assert.equal(holambra?.alcance, 50000);
+  assert.equal(guarulhos?.estimado, true);
+  assert.equal(holambra?.estimado, true);
+});
+
+test("uma campanha estimada contamina a cidade, mesmo somada a uma medida", () => {
+  const pontos = montarMapa([
+    impulsionamento({
+      audience: { locations: ["Guarulhos"], ageMin: 18, ageMax: 65, interests: [] },
+      results: {
+        spend: 500,
+        reach: 20000,
+        impressions: 30000,
+        engagement: 1000,
+        clicks: 200,
+        porLocal: [{ local: "Guarulhos", reach: 20000, spend: 500 }],
+      },
+    }),
+    impulsionamento({
+      audience: { locations: ["Guarulhos", "Campinas"], ageMin: 18, ageMax: 65, interests: [] },
+      results: { spend: 1000, reach: 40000, impressions: 60000, engagement: 2000, clicks: 400 },
+    }),
+  ]);
+
+  const guarulhos = pontos.find((p) => p.municipio.nome === "Guarulhos");
+  assert.equal(guarulhos?.alcance, 40000);
+  // 20.000 medidos + 20.000 repartidos. Quem lê "medido" precisa poder confiar
+  // que tudo ali foi medido, então o conjunto vira estimativa.
+  assert.equal(guarulhos?.estimado, true);
+});
+
+test("cidade sem nenhuma entrega não é estimativa — é zero mesmo", () => {
+  const pontos = montarMapa([]);
+  assert.ok(pontos.every((ponto) => ponto.estimado === false));
+  assert.ok(pontos.every((ponto) => ponto.alcance === 0));
+});

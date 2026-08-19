@@ -181,6 +181,37 @@ O desenho que você fez — desempenho, destaque, tendência, horários, produç
 alertas, análise — é o Painel depois que os nove itens acima existirem. Montá-lo
 antes seria desenhar as caixas e preenchê-las com nada.
 
+## Alcance por cidade: de onde ele vem
+
+A pergunta "quantas pessoas alcancei em Guarulhos?" tem uma resposta boa e uma
+armadilha.
+
+**A resposta boa é o tráfego pago.** O Meta Ads devolve desempenho por região —
+o relatório "Localização" do gerenciador —, e ali o alcance de cada cidade é
+medido, não estimado. É o dado certo, e chega assim que a campanha rodar.
+
+**A armadilha é o total da campanha.** Se a plataforma receber só "esta campanha
+alcançou 100 mil pessoas" e a lista de cidades segmentadas, ela não tem como
+saber quanto coube a cada uma. A única repartição possível é dividir igualmente
+— e isso é quase sempre errado: numa campanha para Guarulhos e Holambra, a
+divisão igual daria 50 mil para uma cidade de 1,3 milhão de habitantes e 50 mil
+para uma de 13 mil.
+
+Por isso `Boost.results.porLocal` existe. Quando a quebra está lá, cada cidade
+recebe o que de fato aconteceu nela e o número é **medido**. Quando não está, a
+divisão igual acontece, mas o ponto sai marcado como **estimado**: o círculo no
+mapa fica tracejado, o rótulo do detalhe vira "Alcançados aqui (estimado)" e a
+nota diz "repartido igualmente entre as cidades do anúncio".
+
+Uma cidade que recebeu uma campanha medida e outra repartida conta como
+estimada. É a leitura conservadora, e é a certa: quem lê "medido" precisa poder
+confiar que tudo ali foi medido.
+
+**O que falta para automatizar:** a importação da quebra por região, seja pela
+API do Meta (depende da conta de anúncios conectada) ou pelo Windsor.ai, que já
+tem lugar na configuração (`WINDSOR_API_KEY`). Enquanto isso, ela pode ser
+preenchida à mão a partir do relatório de Localização do gerenciador.
+
 ## Sobre as janelas de teste
 
 As três janelas do documento — 13h–14h, 19h–20h, 21h30–22h30 — entram como

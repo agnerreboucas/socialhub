@@ -40,6 +40,15 @@ export type PontoNoMapa = {
   investido: number;
   /** Publicações entregues aqui. */
   publicacoes: string[];
+  /**
+   * Verdadeiro quando parte deste alcance veio de divisão igual, e não da
+   * quebra por região que a rede devolve.
+   *
+   * A tela precisa disso para não apresentar como medido um número que a
+   * plataforma repartiu por conta própria — que é a diferença entre informar e
+   * inventar com aparência de precisão.
+   */
+  estimado: boolean;
   ehCapital: boolean;
 };
 
@@ -97,10 +106,43 @@ export function projetar(lat: number, lon: number): { x: number; y: number } {
 export function montarMapa(impulsionamentos: Boost[]): PontoNoMapa[] {
   const alcancePorCodigo = new Map<
     string,
-    { alcance: number; investido: number; posts: Set<string> }
+    { alcance: number; investido: number; posts: Set<string>; estimado: boolean }
   >();
 
   for (const boost of impulsionamentos) {
+    const guardar = (municipio: Municipio, alcance: number, investido: number, medido: boolean) => {
+      const atual = alcancePorCodigo.get(municipio.codigo) ?? {
+        alcance: 0,
+        investido: 0,
+        posts: new Set<string>(),
+        estimado: false,
+      };
+      atual.alcance += alcance;
+      atual.investido += investido;
+      atual.posts.add(boost.postId);
+      // Basta uma campanha repartida por estimativa para o número da cidade
+      // deixar de ser medido. É a leitura conservadora, e é a certa: quem vê
+      // "medido" precisa poder confiar que tudo ali foi medido.
+      if (!medido) atual.estimado = true;
+      alcancePorCodigo.set(municipio.codigo, atual);
+    };
+
+    // Caminho bom: a rede devolveu a quebra por região. Cada cidade recebe o
+    // que de fato aconteceu nela.
+    const quebra = boost.results.porLocal ?? [];
+    if (quebra.length > 0) {
+      for (const linha of quebra) {
+        const municipio = acharMunicipio(linha.local);
+        if (municipio) guardar(municipio, linha.reach, linha.spend, true);
+      }
+      continue;
+    }
+
+    // Caminho de fallback: só o total da campanha e a lista de cidades
+    // segmentadas. A divisão igual é a única repartição possível — e é quase
+    // certamente errada, porque uma cidade de um milhão de habitantes não
+    // recebe o mesmo que uma de treze mil. Por isso o resultado sai marcado
+    // como estimado, e a tela diz isso.
     const encontrados = boost.audience.locations
       .map((local) => acharMunicipio(local))
       .filter((municipio): municipio is Municipio => municipio !== null);
@@ -109,15 +151,7 @@ export function montarMapa(impulsionamentos: Boost[]): PontoNoMapa[] {
     const fatia = 1 / encontrados.length;
 
     for (const municipio of encontrados) {
-      const atual = alcancePorCodigo.get(municipio.codigo) ?? {
-        alcance: 0,
-        investido: 0,
-        posts: new Set<string>(),
-      };
-      atual.alcance += boost.results.reach * fatia;
-      atual.investido += boost.results.spend * fatia;
-      atual.posts.add(boost.postId);
-      alcancePorCodigo.set(municipio.codigo, atual);
+      guardar(municipio, boost.results.reach * fatia, boost.results.spend * fatia, false);
     }
   }
 
@@ -129,6 +163,7 @@ export function montarMapa(impulsionamentos: Boost[]): PontoNoMapa[] {
       alcance: Math.round(entregue?.alcance ?? 0),
       investido: Math.round((entregue?.investido ?? 0) * 100) / 100,
       publicacoes: [...(entregue?.posts ?? [])],
+      estimado: entregue?.estimado ?? false,
       ehCapital: municipio.codigo === CODIGO_DA_CAPITAL,
     };
   });

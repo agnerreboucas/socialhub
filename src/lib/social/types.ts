@@ -347,6 +347,20 @@ export type Boost = {
     impressions: number;
     engagement: number;
     clicks: number;
+    /**
+     * O alcance real de cada cidade, quando a rede devolve a quebra.
+     *
+     * O Meta Ads informa desempenho por região — é o relatório "Localização" do
+     * gerenciador. Guardar essa quebra é a diferença entre um mapa medido e um
+     * mapa plausível: sem ela, a plataforma só sabe o total da campanha e as
+     * cidades que foram segmentadas, e teria de repartir o total por conta
+     * própria.
+     *
+     * Ausente quando a campanha foi cadastrada à mão ou quando a quebra ainda
+     * não foi importada. Nesse caso a plataforma reparte igualmente e **avisa
+     * na tela que aquilo é estimativa** — ver `montarMapa`.
+     */
+    porLocal?: { local: string; reach: number; spend: number }[];
   };
 };
 

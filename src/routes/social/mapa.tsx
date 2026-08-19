@@ -479,12 +479,16 @@ function DetalheDoMunicipio({
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Indicador
-              rotulo="Alcançados aqui"
+              rotulo={dado.ponto.estimado ? "Alcançados aqui (estimado)" : "Alcançados aqui"}
               valor={dado.ponto.alcance > 0 ? formatNumber(dado.ponto.alcance) : "ninguém"}
               nota={
-                dado.penetracao !== null && dado.ponto.alcance > 0
-                  ? `${formatPercent(dado.penetracao * 100, 1)} da população`
-                  : "por anúncio segmentado"
+                // Um número repartido pela plataforma não pode ter a mesma cara
+                // de um número que a rede mediu. A nota diz qual é qual.
+                dado.ponto.estimado
+                  ? "repartido igualmente entre as cidades do anúncio"
+                  : dado.penetracao !== null && dado.ponto.alcance > 0
+                    ? `${formatPercent(dado.penetracao * 100, 1)} da população`
+                    : "por anúncio segmentado"
               }
               alerta={dado.ponto.alcance === 0 && dado.ehPrioritario}
             />
