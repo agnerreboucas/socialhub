@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { Minus, Plus } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 
 import { FAIXAS_IPS, PROPORCAO_DO_MAPA, faixaDoIps, type PontoNoMapa } from "@/lib/social/mapa";
 import { CONTORNO_SP, MALHA_SP } from "@/lib/social/malha-sp";
@@ -109,6 +110,61 @@ export function MapaDeSaoPaulo({
 }) {
   const [sobre, setSobre] = useState<PontoNoMapa | null>(null);
 
+  /**
+   * A janela visível do mapa, em unidades do desenho.
+   *
+   * O zoom é feito movendo esta janela, e não com `transform` no grupo: assim os
+   * rótulos e a espessura dos traços continuam do tamanho certo em qualquer
+   * aproximação. Com `scale`, um texto de 10px viraria 80px ao ampliar oito
+   * vezes.
+   */
+  const [janela, setJanela] = useState({ x: 0, y: 0, largura: LARGURA });
+  const svgRef = useRef<SVGSVGElement>(null);
+  const arrastando = useRef<{ x: number; y: number } | null>(null);
+
+  const escalaDoZoom = LARGURA / janela.largura;
+  const alturaDaJanela = janela.largura * PROPORCAO_DO_MAPA;
+
+  /**
+   * Aproxima ou afasta mantendo um ponto parado.
+   *
+   * O ponto parado é o do cursor. Sem isso, o zoom da roda do mouse "foge": a
+   * pessoa aponta para Sorocaba, gira a roda e a tela vai para outro lugar,
+   * obrigando a arrastar de volta a cada passo.
+   */
+  const aproximar = (fator: number, focoX?: number, focoY?: number) => {
+    setJanela((atual) => {
+      const largura = Math.min(LARGURA, Math.max(LARGURA / 24, atual.largura / fator));
+      if (largura === atual.largura) return atual;
+
+      const altura = atual.largura * PROPORCAO_DO_MAPA;
+      const alvoX = focoX ?? atual.x + atual.largura / 2;
+      const alvoY = focoY ?? atual.y + altura / 2;
+      const proporcao = largura / atual.largura;
+
+      // O limite mantém a janela sobre o desenho: sem ele dá para arrastar o
+      // estado inteiro para fora da tela e ficar olhando o vazio.
+      const limitar = (valor: number, tamanho: number, total: number) =>
+        Math.min(Math.max(valor, -tamanho * 0.1), total - tamanho * 0.9);
+
+      return {
+        largura,
+        x: limitar(alvoX - (alvoX - atual.x) * proporcao, largura, LARGURA),
+        y: limitar(alvoY - (alvoY - atual.y) * proporcao, largura * PROPORCAO_DO_MAPA, ALTURA),
+      };
+    });
+  };
+
+  /** Converte a posição do mouse na tela para as unidades do desenho. */
+  const noDesenho = (evento: { clientX: number; clientY: number }) => {
+    const caixa = svgRef.current?.getBoundingClientRect();
+    if (!caixa) return null;
+    return {
+      x: janela.x + ((evento.clientX - caixa.left) / caixa.width) * janela.largura,
+      y: janela.y + ((evento.clientY - caixa.top) / caixa.height) * alturaDaJanela,
+    };
+  };
+
   const maiorAlcance = useMemo(
     () => Math.max(...pontos.map((ponto) => ponto.alcance), 1),
     [pontos],
@@ -166,30 +222,48 @@ export function MapaDeSaoPaulo({
    * passar do mouse.
    */
   const rotulados = useMemo(() => {
-    if (visao !== "camada" && visao !== "eixo") return [];
+    // Com o mapa aproximado, o nome passa a ser a informação principal — é para
+    // isso que a pessoa aproximou. Por isso os rótulos aparecem em qualquer
+    // visão a partir de duas vezes, e não só nas territoriais.
+    if (escalaDoZoom < 2 && visao !== "camada" && visao !== "eixo") return [];
 
     // Guloso, em ordem de ranking: a cidade só recebe nome se estiver longe o
     // bastante de outra já rotulada. Sem isto, metade dos doze primeiros cai na
     // Grande São Paulo e os nomes viram um borrão — que foi exatamente o que
     // aconteceu na primeira versão. Assim o mapa rotula polos espalhados, como
     // faz um mapa impresso.
-    const DISTANCIA_MINIMA = 0.055;
+    // Os três limites afrouxam com o zoom, e é isso que faz aproximar valer a
+    // pena: a distância mínima encolhe junto com a janela, o corte do ranking
+    // desce mais fundo e cabem mais nomes na tela.
+    const DISTANCIA_MINIMA = 0.055 / escalaDoZoom;
+    const ATE_A_POSICAO = Math.round(40 * escalaDoZoom);
+    const QUANTOS = Math.round(12 * Math.min(escalaDoZoom, 6));
     const escolhidos: typeof territorios = [];
 
-    for (const item of [...territorios].sort(
+    // Só o que está dentro da janela: rotular quem ficou fora da tela gasta o
+    // orçamento de nomes com cidade que ninguém está vendo.
+    const naJanela = territorios.filter(
+      ({ ponto }) =>
+        ponto.x * LARGURA >= janela.x &&
+        ponto.x * LARGURA <= janela.x + janela.largura &&
+        ponto.y * LARGURA >= janela.y &&
+        ponto.y * LARGURA <= janela.y + alturaDaJanela,
+    );
+
+    for (const item of [...naJanela].sort(
       (a, b) => (a.ponto.municipio.posicao ?? 999) - (b.ponto.municipio.posicao ?? 999),
     )) {
-      if ((item.ponto.municipio.posicao ?? 999) > 40) break;
+      if ((item.ponto.municipio.posicao ?? 999) > ATE_A_POSICAO) break;
       const colide = escolhidos.some(
         (outro) =>
           Math.hypot(outro.ponto.x - item.ponto.x, outro.ponto.y - item.ponto.y) < DISTANCIA_MINIMA,
       );
       if (!colide) escolhidos.push(item);
-      if (escolhidos.length >= 12) break;
+      if (escolhidos.length >= QUANTOS) break;
     }
 
     return escolhidos;
-  }, [territorios, visao]);
+  }, [territorios, visao, escalaDoZoom, janela, alturaDaJanela]);
 
   const emDestaque =
     sobre ?? pontos.find((ponto) => ponto.municipio.codigo === selecionado) ?? null;
@@ -208,7 +282,12 @@ export function MapaDeSaoPaulo({
   const raio = (ponto: PontoNoMapa, escala: number) => {
     const populacao = ponto.municipio.populacao ?? 0;
     const fracao = Math.sqrt(populacao / maiorPopulacao);
-    return Math.max(2, fracao * escala * 0.035);
+    // Dividido pela raiz do zoom: sem compensação nenhuma, aproximar oito vezes
+    // multiplicaria a mancha por oito e o interior do estado viraria um borrão
+    // — foi o que aconteceu no recorte metropolitano antes de eu corrigir. Raiz
+    // e não o zoom cheio porque os círculos devem crescer **um pouco** ao
+    // aproximar; senão o zoom não mostra nada de novo.
+    return Math.max(1.5, (fracao * escala * 0.035) / Math.sqrt(escalaDoZoom));
   };
 
   /**
@@ -263,9 +342,45 @@ export function MapaDeSaoPaulo({
     <div className="relative">
       <div className="relative">
         <svg
-          viewBox={`0 0 ${LARGURA} ${ALTURA}`}
-          className="w-full"
+          ref={svgRef}
+          viewBox={`${janela.x} ${janela.y} ${janela.largura} ${alturaDaJanela}`}
+          className={cn("w-full touch-none", escalaDoZoom > 1 ? "cursor-grab" : "")}
           role="img"
+          onWheel={(evento) => {
+            const ponto = noDesenho(evento);
+            aproximar(evento.deltaY < 0 ? 1.2 : 1 / 1.2, ponto?.x, ponto?.y);
+          }}
+          onPointerDown={(evento) => {
+            if (escalaDoZoom <= 1) return;
+            arrastando.current = { x: evento.clientX, y: evento.clientY };
+            evento.currentTarget.setPointerCapture(evento.pointerId);
+          }}
+          onPointerMove={(evento) => {
+            const inicio = arrastando.current;
+            if (!inicio) return;
+            const caixa = svgRef.current?.getBoundingClientRect();
+            if (!caixa) return;
+
+            // O deslocamento é convertido para unidades do desenho antes de
+            // somar: arrastar 10px numa janela apertada move muito menos
+            // território do que os mesmos 10px no estado inteiro.
+            const dx = ((evento.clientX - inicio.x) / caixa.width) * janela.largura;
+            const dy = ((evento.clientY - inicio.y) / caixa.height) * alturaDaJanela;
+            arrastando.current = { x: evento.clientX, y: evento.clientY };
+            setJanela((atual) => ({
+              ...atual,
+              x: Math.min(
+                Math.max(atual.x - dx, -atual.largura * 0.1),
+                LARGURA - atual.largura * 0.9,
+              ),
+              y: Math.min(
+                Math.max(atual.y - dy, -alturaDaJanela * 0.1),
+                ALTURA - alturaDaJanela * 0.9,
+              ),
+            }));
+          }}
+          onPointerUp={() => (arrastando.current = null)}
+          onPointerCancel={() => (arrastando.current = null)}
           aria-label={`Mapa do estado de São Paulo com ${pontos.length} municípios em círculos proporcionais à população, coloridos por ${visao}.`}
         >
           {/* O corpo do estado, por baixo de tudo.
@@ -294,13 +409,16 @@ export function MapaDeSaoPaulo({
                 <text
                   key={`rotulo-${ponto.municipio.codigo}`}
                   x={ponto.x * LARGURA}
-                  y={ponto.y * LARGURA - 6}
+                  y={ponto.y * LARGURA - 6 / escalaDoZoom - raio(ponto, LARGURA) * 0.6}
                   textAnchor="middle"
-                  className="fill-foreground text-[10px] font-medium"
+                  className="fill-foreground font-medium"
                   style={{
+                    // Em unidades do desenho, dividido pelo zoom: assim o nome
+                    // mantém o mesmo tamanho na tela em qualquer aproximação.
+                    fontSize: 10 / escalaDoZoom,
                     paintOrder: "stroke",
                     stroke: "var(--color-background)",
-                    strokeWidth: 3,
+                    strokeWidth: 3 / escalaDoZoom,
                   }}
                 >
                   {ponto.municipio.nome}
@@ -371,6 +489,47 @@ export function MapaDeSaoPaulo({
             <p className="mt-1.5 text-[10px] text-muted-foreground">clique para abrir o detalhe</p>
           </div>
         ) : null}
+
+        {/* Os controles de zoom, no canto de cima à direita — onde todo mapa
+            os põe. O botão de voltar só aparece aproximado: um "estado inteiro"
+            sempre visível seria um botão que não faz nada na maior parte do
+            tempo. */}
+        <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
+          <div className="flex overflow-hidden rounded-lg border border-border bg-card/92 shadow-sm backdrop-blur">
+            <button
+              type="button"
+              onClick={() => aproximar(1.6)}
+              aria-label="Aproximar o mapa"
+              className="px-2.5 py-1.5 text-sm transition-colors hover:bg-secondary disabled:opacity-40"
+              disabled={janela.largura <= LARGURA / 24 + 0.01}
+            >
+              <Plus className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => aproximar(1 / 1.6)}
+              aria-label="Afastar o mapa"
+              className="border-l border-border px-2.5 py-1.5 text-sm transition-colors hover:bg-secondary disabled:opacity-40"
+              disabled={escalaDoZoom <= 1.01}
+            >
+              <Minus className="size-4" />
+            </button>
+          </div>
+
+          {escalaDoZoom > 1.01 ? (
+            <button
+              type="button"
+              onClick={() => setJanela({ x: 0, y: 0, largura: LARGURA })}
+              className="rounded-lg border border-border bg-card/92 px-2.5 py-1 text-[11px] shadow-sm backdrop-blur transition-colors hover:bg-secondary"
+            >
+              Estado inteiro · {escalaDoZoom.toFixed(1)}×
+            </button>
+          ) : (
+            <span className="rounded-lg bg-card/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur">
+              role para aproximar
+            </span>
+          )}
+        </div>
 
         {/* O recorte metropolitano, sobreposto no canto que fica vazio. */}
         <div className="absolute bottom-2 left-2 w-[38%] max-w-[19rem] rounded-xl border border-border bg-card/92 p-2 shadow-lg backdrop-blur sm:w-[32%]">

@@ -180,6 +180,42 @@ if ((await campoEmail.count()) === 0) {
     erros.push(`os círculos têm só ${raios} raios distintos; o tamanho não está variando`);
   }
 
+  // O zoom é a diferença entre um mapa que se olha e um mapa que se explora.
+  // A prova é a janela de visão encolher e mais cidades ganharem nome — se só
+  // o viewBox mudasse, o zoom seria uma lupa que não revela nada.
+  const mapa = pagina.locator('svg[aria-label^="Mapa do estado"]').first();
+  const janelaInicial = await mapa.getAttribute("viewBox");
+  const nomesVisiveis = async () =>
+    (await pagina.locator("svg text").allTextContents()).filter((t) => t.length > 2).length;
+  const nomesAntes = await nomesVisiveis();
+
+  for (let vez = 0; vez < 3; vez += 1) {
+    await pagina.getByRole("button", { name: "Aproximar o mapa" }).click();
+    await pagina.waitForTimeout(400);
+  }
+  const janelaAproximada = await mapa.getAttribute("viewBox");
+  const nomesDepois = await nomesVisiveis();
+
+  if (janelaAproximada !== janelaInicial) {
+    console.log("✓ o mapa aproxima");
+  } else {
+    erros.push("o botão de aproximar não mexeu na janela do mapa");
+  }
+
+  if (nomesDepois > nomesAntes) {
+    console.log(`✓ aproximar revela mais municípios (${nomesAntes} → ${nomesDepois})`);
+  } else {
+    erros.push(`aproximar não revelou municípios novos (${nomesAntes} → ${nomesDepois})`);
+  }
+
+  await pagina.getByRole("button", { name: /Estado inteiro/ }).click();
+  await pagina.waitForTimeout(600);
+  if ((await mapa.getAttribute("viewBox")) === janelaInicial) {
+    console.log("✓ e volta para o estado inteiro");
+  } else {
+    erros.push("o botão de voltar não devolveu o mapa ao estado inteiro");
+  }
+
   await pagina.locator('circle:has(title:text-is("Sorocaba"))').first().click({ force: true });
   await pagina.waitForTimeout(2500);
   const dossie = await pagina.locator("body").innerText();
