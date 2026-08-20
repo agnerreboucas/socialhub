@@ -149,24 +149,38 @@ if ((await campoEmail.count()) === 0) {
     .first()
     .click();
   await pagina.waitForTimeout(2500);
-  // Territórios, não pontos: o mapa desenha um caminho por município, e o
-  // recorte metropolitano repete os mesmos 645 num segundo SVG.
-  // O contorno do estado entra como recorte e como traço: sem ele o mapa volta
-  // a ter borda reta, que foi o defeito que este teste existe para pegar.
-  if ((await pagina.locator("clipPath#contorno-do-estado path").count()) > 0) {
-    console.log("✓ o mapa recorta pelo contorno do estado");
+  // Círculos, não polígonos: cada município é um círculo proporcional à
+  // população, e o recorte metropolitano repete os mesmos 645 num segundo SVG.
+  // Antes eram células de Voronoi — mudou porque aquilo desenhava divisas que
+  // não existem.
+  const circulos = await pagina.locator("svg circle").count();
+  if (circulos >= 1290) {
+    console.log(`✓ o mapa desenhou ${circulos} círculos (estado + recorte)`);
   } else {
-    erros.push("o contorno do estado não está sendo usado como recorte");
+    erros.push(`o mapa desenhou ${circulos} círculos; esperava 1290 ou mais`);
   }
 
-  const territorios = await pagina.locator("svg path").count();
-  if (territorios >= 1290) {
-    console.log(`✓ o mapa desenhou ${territorios} territórios (estado + recorte)`);
+  // O contorno do estado continua desenhado: é ele que dá forma ao mapa agora
+  // que os círculos flutuam sobre o fundo. Sem ele ninguém reconhece São Paulo.
+  const contorno = await pagina.locator("svg path[d^='M']").count();
+  if (contorno > 0) {
+    console.log("✓ o contorno do estado está desenhado");
   } else {
-    erros.push(`o mapa desenhou ${territorios} territórios; esperava 1290 ou mais`);
+    erros.push("o contorno do estado sumiu do mapa");
   }
 
-  await pagina.locator('path:has(title:text-is("Sorocaba"))').first().click({ force: true });
+  // Os raios precisam variar: se todos saíssem iguais, o círculo deixaria de
+  // dizer o tamanho da cidade e viraria enfeite.
+  const raios = await pagina.locator("svg circle").evaluateAll((nos) =>
+    [...new Set(nos.map((no) => no.getAttribute("r")))].length,
+  );
+  if (raios >= 20) {
+    console.log(`✓ os círculos têm ${raios} raios distintos — o tamanho diz a população`);
+  } else {
+    erros.push(`os círculos têm só ${raios} raios distintos; o tamanho não está variando`);
+  }
+
+  await pagina.locator('circle:has(title:text-is("Sorocaba"))').first().click({ force: true });
   await pagina.waitForTimeout(2500);
   const dossie = await pagina.locator("body").innerText();
   if (/Vizinhos/i.test(dossie) && /Custo por mil/i.test(dossie)) {
