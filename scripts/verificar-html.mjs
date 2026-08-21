@@ -484,6 +484,39 @@ if ((await campoEmail.count()) === 0) {
     erros.push("painel: não achei o eixo de hora a hora");
   }
 
+  // Os quatro números do topo, com a explicação de cada um. As definições são o
+  // ponto: "alcance" e "impressões" são palavras que quase ninguém distingue, e
+  // um painel que as mostra sem dizer o que são deixa cada pessoa da equipe
+  // interpretar de um jeito.
+  for (const [rotulo, marca] of [
+    ["o cartão de impressões", /IMPRESSÕES/],
+    ["o de frequência", /FREQUÊNCIA/],
+    ["o de mensagens", /MENSAGENS/],
+    ["a definição de alcance", /Pessoas diferentes que viram/i],
+    ["a de impressões", /apareceu na tela de alguém/i],
+    ["a de frequência", /cada pessoa alcançada viu/i],
+  ]) {
+    if (marca.test(noPainel)) console.log(`✓ ${rotulo}`);
+    else erros.push(`painel: faltou ${rotulo}`);
+  }
+
+  // Clicar no cartão de mensagens abre quem escreveu e o que puxou conversa.
+  const cartaoDeMensagens = pagina.locator('button:has-text("MENSAGENS")').first();
+  if (await cartaoDeMensagens.count()) {
+    await cartaoDeMensagens.click();
+    await pagina.waitForTimeout(2500);
+    const aberto = await pagina.locator("body").innerText();
+    if (/O que puxou conversa/i.test(aberto)) {
+      console.log("✓ o cartão de mensagens abre o detalhe");
+    } else {
+      erros.push("painel: o cartão de mensagens não abriu o detalhe");
+    }
+    await cartaoDeMensagens.click();
+    await pagina.waitForTimeout(800);
+  } else {
+    erros.push("painel: não achei o cartão de mensagens");
+  }
+
   const aprofundar = pagina.getByRole("button", { name: /Aprofundar/i }).first();
   if (await aprofundar.count()) {
     await aprofundar.click();

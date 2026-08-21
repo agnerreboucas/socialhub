@@ -15,6 +15,7 @@ import {
   MessagesSquare,
   MousePointerClick,
   Radar,
+  Repeat,
   Rocket,
   Sparkles,
   TrendingUp,
@@ -27,6 +28,7 @@ import {
   detalharPeriodo,
   obterPainel,
   obterPainelGeral,
+  pecasQueGeramConversa,
   quadroDeHorarios,
 } from "@/lib/api/social.functions";
 import { CartaoDeRede } from "@/components/social/cartao-rede";
@@ -52,6 +54,7 @@ import {
   formatPercent,
 } from "@/lib/social/format";
 import { NOME_DO_FORMATO, type DesempenhoDoGrupo } from "@/lib/social/conteudo";
+import { lerFrequencia } from "@/lib/social/atencao";
 import {
   barrasDoQuadro,
   categoriasDoQuadro,
@@ -81,6 +84,9 @@ function PainelPage() {
   const { projectId, session } = useSocialSession();
   const [period, setPeriod] = useState<PeriodKey>("30d");
   const [pontoAberto, setPontoAberto] = useState<SeriesPoint | null>(null);
+  // Qual cartão do topo está aberto. Um de cada vez: dois detalhes abertos
+  // empurrariam o resto do painel para baixo da dobra.
+  const [cartaoAberto, setCartaoAberto] = useState<"frequencia" | "mensagens" | null>(null);
 
   const painel = useQuery({
     queryKey: ["social", "painel", projectId, period],
@@ -134,7 +140,7 @@ function PainelPage() {
         />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <StatCard
               label="Seguidores"
               value={formatNumber(data.summary.followers)}
@@ -144,10 +150,48 @@ function PainelPage() {
             />
             <StatCard
               label="Alcance"
-              value={formatCompact(data.summary.reach)}
+              value={formatCompact(data.atencao.alcance)}
               delta={data.summary.reachDelta}
               hint="vs. período anterior"
               icon={TrendingUp}
+              explica="Pessoas diferentes que viram alguma coisa. Cada uma conta uma vez, mesmo que tenha visto dez."
+            />
+            <StatCard
+              label="Impressões"
+              value={formatCompact(data.atencao.impressoes)}
+              hint="exibições, contando repetição"
+              icon={Eye}
+              explica="Quantas vezes o conteúdo apareceu na tela de alguém. É sempre maior que o alcance — a mesma pessoa vendo duas vezes conta duas."
+            />
+            <StatCard
+              label="Frequência"
+              value={
+                data.atencao.frequencia > 0
+                  ? `${data.atencao.frequencia.toFixed(1).replace(".", ",")}×`
+                  : "—"
+              }
+              hint="impressões ÷ alcance"
+              icon={Repeat}
+              explica="Quantas vezes, em média, cada pessoa alcançada viu. Junta as duas de cima e responde se a mensagem fixou ou se está cansando."
+              onAprofundar={() =>
+                setCartaoAberto(cartaoAberto === "frequencia" ? null : "frequencia")
+              }
+              aberto={cartaoAberto === "frequencia"}
+            />
+            <StatCard
+              label="Mensagens"
+              value={formatNumber(data.conversas.recebidas)}
+              hint={
+                data.conversas.recebidas > 0
+                  ? `${formatNumber(data.conversas.pendentes)} sem resposta`
+                  : "nada chegou no período"
+              }
+              icon={MessagesSquare}
+              explica="Comentários e mensagens diretas que chegaram no período. Deixar alguém sem resposta custa mais do que uma impressão a menos."
+              onAprofundar={() =>
+                setCartaoAberto(cartaoAberto === "mensagens" ? null : "mensagens")
+              }
+              aberto={cartaoAberto === "mensagens"}
             />
             <StatCard
               label="Engajamento"
@@ -155,14 +199,29 @@ function PainelPage() {
               delta={data.summary.engagementDelta}
               hint={`Taxa de ${formatPercent(data.summary.engagementRate)}`}
               icon={Heart}
+              explica="Curtidas, comentários, compartilhamentos e salvamentos somados."
             />
             <StatCard
               label="Investimento em mídia"
               value={formatCurrency(data.summary.adSpend)}
               hint={`${data.activeBoosts} impulsionamento(s) ativo(s)`}
               icon={BadgeDollarSign}
+              explica="O que foi gasto em anúncio no período."
             />
           </div>
+
+          {cartaoAberto === "frequencia" ? (
+            <DetalheDaFrequencia atencao={data.atencao} onFechar={() => setCartaoAberto(null)} />
+          ) : null}
+
+          {cartaoAberto === "mensagens" ? (
+            <DetalheDasMensagens
+              projectId={projectId}
+              period={period}
+              conversas={data.conversas}
+              onFechar={() => setCartaoAberto(null)}
+            />
+          ) : null}
 
           {/* O aviso de procedência vem antes do gráfico: quem lê um número
               precisa saber de onde ele vem antes de interpretá-lo, não depois. */}
@@ -711,7 +770,7 @@ function Ficha({
   rotulo: string;
   valor: string;
   apoio: string;
-  para: "/social/conteudo" | "/social/publico";
+  para: "/social/conteudo" | "/social/publico" | "/social/relacionamento";
 }) {
   return (
     <Link
@@ -753,6 +812,275 @@ const METRICAS: { id: MetricaDoQuadro; rotulo: string }[] = [
   { id: "alcance", rotulo: "Alcance" },
   { id: "interacoes", rotulo: "Interações" },
 ];
+/**
+ * O detalhe da frequência.
+ *
+ * O cartão mostra "1,8×" e ninguém sabe se isso é bom. Aqui a régua aparece:
+ * a conta que produziu o número, a leitura da faixa, e o que fazer com ela.
+ */
+function DetalheDaFrequencia({
+  atencao,
+  onFechar,
+}: {
+  atencao: { alcance: number; impressoes: number; frequencia: number };
+  onFechar: () => void;
+}) {
+  return (
+    <SectionCard
+      title="Frequência: quantas vezes cada pessoa viu"
+      icon={Repeat}
+      actions={<BotaoDeFechar onFechar={onFechar} />}
+    >
+      <div className="space-y-4">
+        <p className="rounded-xl border border-border bg-secondary/30 p-3 text-sm tabular-nums">
+          {formatNumber(atencao.impressoes)} impressões ÷ {formatNumber(atencao.alcance)} pessoas
+          alcançadas ={" "}
+          <strong>
+            {atencao.frequencia > 0
+              ? `${atencao.frequencia.toFixed(2).replace(".", ",")} vezes por pessoa`
+              : "—"}
+          </strong>
+        </p>
+
+        <p className="flex items-start gap-2 rounded-xl border border-accent/40 bg-accent/5 p-3 text-sm">
+          <Lightbulb className="mt-0.5 size-4 shrink-0 text-accent" />
+          {lerFrequencia(atencao.frequencia)}
+        </p>
+
+        <div className="grid gap-2 text-xs sm:grid-cols-3">
+          <FaixaDaFrequencia
+            de="até 1,2×"
+            o="Alcance amplo, pouca repetição"
+            ativa={atencao.frequencia > 0 && atencao.frequencia < 1.2}
+          />
+          <FaixaDaFrequencia
+            de="1,2× a 2,5×"
+            o="A mensagem fixa sem cansar"
+            ativa={atencao.frequencia >= 1.2 && atencao.frequencia < 2.5}
+          />
+          <FaixaDaFrequencia
+            de="acima de 2,5×"
+            o="Repetição alta — risco de desgaste"
+            ativa={atencao.frequencia >= 2.5}
+          />
+        </div>
+
+        <p className="text-[11px] leading-snug text-muted-foreground">
+          As faixas são régua de leitura, não veredito: o número aceitável muda com o objetivo e com
+          o tempo de campanha. O que elas evitam é um número solto que cada pessoa da equipe
+          interpreta de um jeito.
+        </p>
+      </div>
+    </SectionCard>
+  );
+}
+
+function FaixaDaFrequencia({ de, o, ativa }: { de: string; o: string; ativa: boolean }) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border p-2.5",
+        ativa ? "border-accent/60 bg-accent/10" : "border-border text-muted-foreground",
+      )}
+    >
+      <p className={cn("font-medium tabular-nums", ativa && "text-accent")}>{de}</p>
+      <p className="mt-0.5 leading-snug">{o}</p>
+    </div>
+  );
+}
+
+/**
+ * O detalhe das mensagens: o que puxou conversa e quem ainda espera.
+ *
+ * Duas listas, e a ordem entre elas é a decisão: primeiro **quem espera**,
+ * depois **o que funcionou**. Um painel que abre pelo ranking de peças trata a
+ * caixa de entrada como relatório; abrindo pela fila, ela é o que de fato é —
+ * gente esperando resposta.
+ */
+function DetalheDasMensagens({
+  projectId,
+  period,
+  conversas,
+  onFechar,
+}: {
+  projectId: string | null;
+  period: PeriodKey;
+  conversas: {
+    recebidas: number;
+    respondidas: number;
+    pendentes: number;
+    taxaDeResposta: number;
+    mensagens: number;
+    comentarios: number;
+  };
+  onFechar: () => void;
+}) {
+  const detalhe = useQuery({
+    queryKey: ["social", "conversas-por-peca", projectId, period],
+    queryFn: () => pecasQueGeramConversa({ data: { projectId: projectId ?? undefined, period } }),
+    enabled: Boolean(projectId),
+  });
+
+  return (
+    <SectionCard
+      title="Mensagens: quem escreveu e o que puxou conversa"
+      icon={MessagesSquare}
+      actions={<BotaoDeFechar onFechar={onFechar} />}
+    >
+      <div className="space-y-5">
+        <div className="grid gap-3 sm:grid-cols-4">
+          <Ficha
+            rotulo="Chegaram"
+            valor={formatNumber(conversas.recebidas)}
+            apoio={`${conversas.comentarios} comentários · ${conversas.mensagens} diretas`}
+            para="/social/relacionamento"
+          />
+          <Ficha
+            rotulo="Respondidas"
+            valor={formatNumber(conversas.respondidas)}
+            apoio={`${formatPercent(conversas.taxaDeResposta, 0)} do total`}
+            para="/social/relacionamento"
+          />
+          <Ficha
+            rotulo="Sem resposta"
+            valor={formatNumber(conversas.pendentes)}
+            apoio={conversas.pendentes > 0 ? "esperando alguém da equipe" : "nenhuma na fila"}
+            para="/social/relacionamento"
+          />
+          <Ficha
+            rotulo="Taxa de resposta"
+            valor={formatPercent(conversas.taxaDeResposta, 0)}
+            apoio="respondidas ÷ recebidas"
+            para="/social/relacionamento"
+          />
+        </div>
+
+        {detalhe.isPending ? (
+          <LoadingBlock rows={3} />
+        ) : (
+          <>
+            {(detalhe.data?.esperando.length ?? 0) > 0 ? (
+              <div>
+                <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                  Esperando há mais tempo
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {detalhe.data?.esperando.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-lg border border-border p-2.5 text-sm"
+                    >
+                      <span className="font-medium">{item.autor}</span>
+                      <span className="rounded border border-border px-1 py-0.5 text-[10px] text-muted-foreground">
+                        {item.tipo === "mensagem" ? "direta" : "comentário"}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                        {item.texto}
+                      </span>
+                      <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                        {new Date(item.chegouEm).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                        })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            <div>
+              <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                O que puxou conversa
+              </p>
+              {(detalhe.data?.pecas.length ?? 0) === 0 ? (
+                <p className="mt-1.5 text-sm text-muted-foreground">Nenhuma conversa no período.</p>
+              ) : (
+                <ul className="mt-2 space-y-1.5">
+                  {detalhe.data?.pecas.map((linha, indice) => (
+                    <li key={linha.postId ?? `solta-${indice}`}>
+                      <PecaQuePuxou linha={linha} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <Link
+              to="/social/relacionamento"
+              className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline"
+            >
+              Abrir a caixa de entrada
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </>
+        )}
+      </div>
+    </SectionCard>
+  );
+}
+
+function PecaQuePuxou({
+  linha,
+}: {
+  linha: {
+    postId: string | null;
+    legenda: string | null;
+    semPeca: boolean;
+    recebidas: number;
+    respondidas: number;
+    pendentes: number;
+  };
+}) {
+  const conteudo = (
+    <>
+      <span className="min-w-0 flex-1 text-sm">
+        {linha.semPeca ? (
+          // A linha que impede o total da lista de discordar do total do cartão.
+          <span className="text-muted-foreground">
+            Conversas sem publicação de origem — mensagem direta costuma chegar assim
+          </span>
+        ) : (
+          (linha.legenda ?? "(publicação que não está mais no projeto)")
+        )}
+      </span>
+      <span className="shrink-0 text-right text-sm tabular-nums">
+        {formatNumber(linha.recebidas)}
+        <span className="block text-[11px] text-muted-foreground">
+          {linha.pendentes > 0 ? `${linha.pendentes} sem resposta` : "todas respondidas"}
+        </span>
+      </span>
+    </>
+  );
+
+  const classe =
+    "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-lg border border-border p-3";
+
+  if (linha.semPeca || !linha.postId) return <div className={classe}>{conteudo}</div>;
+
+  return (
+    <Link
+      to="/social/publicacao/$postId"
+      params={{ postId: linha.postId }}
+      className={cn(classe, "transition-colors hover:border-accent/60")}
+    >
+      {conteudo}
+    </Link>
+  );
+}
+
+function BotaoDeFechar({ onFechar }: { onFechar: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onFechar}
+      className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-secondary"
+    >
+      Fechar
+    </button>
+  );
+}
+
 /**
  * Horários, mídia e público: um bloco só, no alto do Painel.
  *

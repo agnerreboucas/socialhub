@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, ChevronDown, type LucideIcon } from "lucide-react";
 
 import { NETWORKS, statusLabel } from "@/lib/social/networks";
 import { PERIOD_KEYS, PERIOD_LABELS, formatSignedPercent } from "@/lib/social/format";
@@ -71,18 +71,33 @@ export function StatCard({
   delta,
   hint,
   icon: Icon,
+  explica,
+  onAprofundar,
+  aberto = false,
 }: {
   label: string;
   value: string;
   delta?: number;
   hint?: string;
   icon?: LucideIcon;
+  /**
+   * O que este número é, em uma frase.
+   *
+   * Existe porque "alcance" e "impressões" são palavras que a plataforma usa
+   * como se todo mundo soubesse a diferença — e quase ninguém sabe. Um número
+   * sem definição do lado é um número que cada pessoa da equipe interpreta de
+   * um jeito, e aí a reunião discute a interpretação em vez do resultado.
+   */
+  explica?: string;
+  /** Quando presente, o cartão vira botão e abre o detalhe. */
+  onAprofundar?: () => void;
+  aberto?: boolean;
 }) {
   const showDelta = typeof delta === "number" && Number.isFinite(delta) && delta !== 0;
   const positive = (delta ?? 0) > 0;
 
-  return (
-    <div className="surface-card p-5">
+  const conteudo = (
+    <>
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</span>
         {Icon ? <Icon className="size-4 text-muted-foreground" /> : null}
@@ -102,7 +117,34 @@ export function StatCard({
         ) : null}
         {hint ? <span className="text-muted-foreground">{hint}</span> : null}
       </div>
-    </div>
+      {explica ? (
+        <p className="mt-2 border-t border-border/60 pt-2 text-[11px] leading-snug text-muted-foreground">
+          {explica}
+        </p>
+      ) : null}
+      {onAprofundar ? (
+        <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-accent">
+          {aberto ? "Fechar detalhe" : "Ver em detalhe"}
+          <ChevronDown className={cn("size-3 transition-transform", aberto && "rotate-180")} />
+        </p>
+      ) : null}
+    </>
+  );
+
+  if (!onAprofundar) return <div className="surface-card p-5">{conteudo}</div>;
+
+  return (
+    <button
+      type="button"
+      onClick={onAprofundar}
+      aria-expanded={aberto}
+      className={cn(
+        "surface-card p-5 text-left transition-colors hover:border-accent/50",
+        aberto && "border-accent/60",
+      )}
+    >
+      {conteudo}
+    </button>
   );
 }
 

@@ -112,6 +112,12 @@ import {
   resumirDia,
   statusAoCancelar,
 } from "@/lib/social/agenda";
+import {
+  medirAtencao,
+  medirConversas,
+  noPeriodo,
+  pecasQuePuxamConversa,
+} from "@/lib/social/atencao";
 import { FUSO_DA_CAMPANHA, paredeNaZona } from "@/lib/social/fuso";
 import { lerIcs, planejarImportacao } from "@/lib/social/ics";
 import { MUNICIPIOS_SP, acharMunicipio } from "@/lib/social/municipios-sp";
@@ -807,6 +813,13 @@ export const obterPainel = createServerFn({ method: "POST" })
       .sort((a, b) => (b.metrics?.reach ?? 0) - (a.metrics?.reach ?? 0))
       .slice(0, 5);
 
+    // A mesma janela que o resto do painel usa. Calculada uma vez: dois cortes
+    // diferentes na mesma tela produziriam um alcance de trinta dias ao lado de
+    // uma contagem de mensagens do histórico inteiro.
+    const doPeriodo = slicePeriod(merged, period);
+    const somar = (dias: typeof doPeriodo, campo: keyof (typeof doPeriodo)[number]) =>
+      dias.reduce((total, dia) => total + (Number(dia[campo]) || 0), 0);
+
     const pendingInbox = db.inbox.filter(
       (item) =>
         item.status === "pendente" && accounts.some((account) => account.id === item.accountId),
@@ -827,6 +840,25 @@ export const obterPainel = createServerFn({ method: "POST" })
       topPosts: posts,
       pendingInbox,
       scheduled,
+      /**
+       * Atenção e conversa: os quatro números do topo do Painel.
+       *
+       * Calculados aqui porque `summarize` já resolve o alcance do período e
+       * seria desperdício mandar a série inteira só para a tela somar
+       * impressões de novo. A janela das conversas é a mesma do resto do
+       * painel — sem isso, o cartão de mensagens contaria o histórico todo ao
+       * lado de um alcance de trinta dias.
+       */
+      atencao: medirAtencao(
+        somar(doPeriodo, "organicReach") + somar(doPeriodo, "paidReach"),
+        somar(doPeriodo, "organicImpressions") + somar(doPeriodo, "paidImpressions"),
+      ),
+      conversas: medirConversas(
+        noPeriodo(
+          db.inbox.filter((item) => accounts.some((conta) => conta.id === item.accountId)),
+          doPeriodo[0]?.date ?? null,
+        ),
+      ),
       activeBoosts: db.boosts.filter(
         (boost) =>
           boost.status === "ativo" && accounts.some((account) => account.id === boost.accountId),
@@ -835,6 +867,62 @@ export const obterPainel = createServerFn({ method: "POST" })
       // não na tela evita mandar o histórico inteiro de cada conta pela rede só
       // para a tela somá-lo de novo.
       redes: resumirRedes(accounts, period),
+    };
+  });
+
+/**
+ * Quais publicações puxaram mais conversa no período.
+ *
+ * É o aprofundamento do cartão de mensagens no Painel, e busca à parte de
+ * propósito: só interessa quando alguém clica, e mandá-la junto com o painel
+ * carregaria a caixa de entrada inteira em toda visita.
+ */
+export const pecasQueGeramConversa = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ projectId: z.string().optional(), period: periodSchema }))
+  .handler(async ({ data }) => {
+    const db = getDb();
+    const accounts = await contasPermitidas(data.projectId);
+    const period = data.period as PeriodKey;
+
+    const merged = mergeSeries(
+      accounts.map((conta) => slicePeriod(db.metrics.get(conta.id) ?? [], period)),
+    );
+    const desde = merged[0]?.date ?? null;
+
+    const daConta = db.inbox.filter((item) =>
+      accounts.some((conta) => conta.id === item.accountId),
+    );
+    const doPeriodo = noPeriodo(daConta, desde);
+
+    return {
+      pecas: pecasQuePuxamConversa(doPeriodo, db.posts).map((linha) => ({
+        postId: linha.post?.id ?? null,
+        legenda: linha.post ? resumoDaLegenda(linha.post.caption) : null,
+        formato: linha.post?.format ?? null,
+        semPeca: linha.semPeca,
+        recebidas: linha.recebidas,
+        respondidas: linha.respondidas,
+        pendentes: linha.pendentes,
+      })),
+      /**
+       * As conversas mais antigas ainda sem resposta.
+       *
+       * O cartão diz quantas faltam; isto diz **quais**, e começa pelas que
+       * esperam há mais tempo. Uma fila ordenada pela mais recente deixaria a
+       * pessoa que escreveu primeiro esperando para sempre.
+       */
+      esperando: doPeriodo
+        .filter((item) => item.status === "pendente")
+        .sort((a, b) => a.receivedAt.localeCompare(b.receivedAt))
+        .slice(0, 8)
+        .map((item) => ({
+          id: item.id,
+          autor: item.authorName,
+          texto: resumoDaLegenda(item.text),
+          tipo: item.kind,
+          chegouEm: item.receivedAt,
+          postId: item.postId,
+        })),
     };
   });
 
