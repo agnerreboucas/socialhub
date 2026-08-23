@@ -88,9 +88,20 @@ export default {
       // Antes de qualquer coisa: o teste de saúde não pode depender do
       // roteador nem da renderização. Se a aplicação estiver com problema
       // justamente aí, é quando o provedor mais precisa da resposta.
-      if (new URL(request.url).pathname === "/api/saude") {
+      const caminho = new URL(request.url).pathname;
+
+      if (caminho === "/api/saude") {
         const { respostaDeSaude } = await import("./lib/saude.server");
         return await respostaDeSaude();
+      }
+
+      // A Meta chama este endereço quando alguém pede a exclusão dos dados.
+      // Fica aqui, antes do roteador, porque é uma resposta de máquina para
+      // máquina: sem sessão, sem HTML e sem depender de nada da aplicação
+      // renderizar.
+      if (caminho === "/api/meta/exclusao") {
+        const { responderExclusaoDeDados } = await import("./lib/social/oauth/exclusao.server");
+        return await responderExclusaoDeDados(request);
       }
 
       const handler = await getServerEntry();

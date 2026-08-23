@@ -13,6 +13,7 @@ import { Route as SocialRouteImport } from './routes/social'
 import { Route as RelogiosRouteImport } from './routes/relogios'
 import { Route as RadioRouteImport } from './routes/radio'
 import { Route as ProgramacaoRouteImport } from './routes/programacao'
+import { Route as ExclusaoDeDadosRouteImport } from './routes/exclusao-de-dados'
 import { Route as BibliotecaRouteImport } from './routes/biblioteca'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -57,6 +58,11 @@ const RadioRoute = RadioRouteImport.update({
 const ProgramacaoRoute = ProgramacaoRouteImport.update({
   id: '/programacao',
   path: '/programacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExclusaoDeDadosRoute = ExclusaoDeDadosRouteImport.update({
+  id: '/exclusao-de-dados',
+  path: '/exclusao-de-dados',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BibliotecaRoute = BibliotecaRouteImport.update({
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/exclusao-de-dados': typeof ExclusaoDeDadosRoute
   '/programacao': typeof ProgramacaoRoute
   '/radio': typeof RadioRoute
   '/relogios': typeof RelogiosRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/exclusao-de-dados': typeof ExclusaoDeDadosRoute
   '/programacao': typeof ProgramacaoRoute
   '/radio': typeof RadioRoute
   '/relogios': typeof RelogiosRoute
@@ -251,6 +259,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/exclusao-de-dados': typeof ExclusaoDeDadosRoute
   '/programacao': typeof ProgramacaoRoute
   '/radio': typeof RadioRoute
   '/relogios': typeof RelogiosRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/biblioteca'
+    | '/exclusao-de-dados'
     | '/programacao'
     | '/radio'
     | '/relogios'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/biblioteca'
+    | '/exclusao-de-dados'
     | '/programacao'
     | '/radio'
     | '/relogios'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/biblioteca'
+    | '/exclusao-de-dados'
     | '/programacao'
     | '/radio'
     | '/relogios'
@@ -377,6 +389,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   BibliotecaRoute: typeof BibliotecaRoute
+  ExclusaoDeDadosRoute: typeof ExclusaoDeDadosRoute
   ProgramacaoRoute: typeof ProgramacaoRoute
   RadioRoute: typeof RadioRoute
   RelogiosRoute: typeof RelogiosRoute
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/programacao'
       fullPath: '/programacao'
       preLoaderRoute: typeof ProgramacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exclusao-de-dados': {
+      id: '/exclusao-de-dados'
+      path: '/exclusao-de-dados'
+      fullPath: '/exclusao-de-dados'
+      preLoaderRoute: typeof ExclusaoDeDadosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biblioteca': {
@@ -645,6 +665,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   BibliotecaRoute: BibliotecaRoute,
+  ExclusaoDeDadosRoute: ExclusaoDeDadosRoute,
   ProgramacaoRoute: ProgramacaoRoute,
   RadioRoute: RadioRoute,
   RelogiosRoute: RelogiosRoute,

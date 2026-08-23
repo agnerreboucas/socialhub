@@ -93,7 +93,22 @@ Também será exigido:
 - **Verificação do negócio** (documento da empresa).
 - **Política de privacidade** publicada em URL própria.
 - **URL de exclusão de dados** — a Meta chama esse endereço quando um usuário
-  pede remoção. Ainda não implementado; entra junto com o trabalho de LGPD.
+  pede remoção. **Implementado**, em `POST /api/meta/exclusao`, com a página de
+  acompanhamento em `/exclusao-de-dados`. Cadastre no aplicativo:
+
+  | Campo na Meta | Valor |
+  | --- | --- |
+  | *Callback de exclusão de dados* | `https://seu-dominio.com.br/api/meta/exclusao` |
+  | *URL da política de privacidade* | ainda falta publicar |
+
+  O endpoint confere a assinatura HMAC-SHA256 do `signed_request` com o
+  `META_APP_SECRET` antes de qualquer coisa. Sem essa conferência, quem
+  descobrisse o endereço apagaria dados de qualquer pessoa com um POST — e o
+  endereço é público por obrigação. Pedido sem assinatura válida recebe 400, e o
+  motivo vai só para o log: quem forja não precisa saber onde foi pego.
+
+  Para testar à mão, ele também aceita `application/json` com o campo
+  `signed_request`.
 
 ## O que acontece quando algo falha
 
