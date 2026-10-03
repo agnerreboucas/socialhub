@@ -8,6 +8,7 @@ import {
   taxaDeEngajamento,
   totalDeInteracoes,
 } from "./post-analytics.ts";
+import type { CampoDivisivel } from "./post-analytics.ts";
 import type { Post, PostMetrics } from "./types.ts";
 
 const metricas: PostMetrics = {
@@ -28,7 +29,7 @@ const post = {
 
 test("a divisão por conta soma exatamente o total", () => {
   const porConta = dividirPorConta(post);
-  const soma = (campo: keyof PostMetrics) =>
+  const soma = (campo: CampoDivisivel) =>
     Object.values(porConta).reduce((total, m) => total + m[campo], 0);
 
   assert.equal(soma("reach"), metricas.reach);

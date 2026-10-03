@@ -24,7 +24,7 @@ import { Route as SocialRelacionamentoRouteImport } from './routes/social/relaci
 import { Route as SocialPublicoRouteImport } from './routes/social/publico'
 import { Route as SocialPublicacoesRouteImport } from './routes/social/publicacoes'
 import { Route as SocialPerfilRouteImport } from './routes/social/perfil'
-import { Route as SocialMapaRouteImport } from './routes/social/mapa'
+import { Route as SocialLocalidadesRouteImport } from './routes/social/localidades'
 import { Route as SocialImpulsionamentosRouteImport } from './routes/social/impulsionamentos'
 import { Route as SocialImportarRouteImport } from './routes/social/importar'
 import { Route as SocialHistoricoRouteImport } from './routes/social/historico'
@@ -115,9 +115,9 @@ const SocialPerfilRoute = SocialPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => SocialRoute,
 } as any)
-const SocialMapaRoute = SocialMapaRouteImport.update({
-  id: '/mapa',
-  path: '/mapa',
+const SocialLocalidadesRoute = SocialLocalidadesRouteImport.update({
+  id: '/localidades',
+  path: '/localidades',
   getParentRoute: () => SocialRoute,
 } as any)
 const SocialImpulsionamentosRoute = SocialImpulsionamentosRouteImport.update({
@@ -210,7 +210,7 @@ export interface FileRoutesByFullPath {
   '/social/historico': typeof SocialHistoricoRoute
   '/social/importar': typeof SocialImportarRoute
   '/social/impulsionamentos': typeof SocialImpulsionamentosRoute
-  '/social/mapa': typeof SocialMapaRoute
+  '/social/localidades': typeof SocialLocalidadesRoute
   '/social/perfil': typeof SocialPerfilRoute
   '/social/publicacoes': typeof SocialPublicacoesRoute
   '/social/publico': typeof SocialPublicoRoute
@@ -241,7 +241,7 @@ export interface FileRoutesByTo {
   '/social/historico': typeof SocialHistoricoRoute
   '/social/importar': typeof SocialImportarRoute
   '/social/impulsionamentos': typeof SocialImpulsionamentosRoute
-  '/social/mapa': typeof SocialMapaRoute
+  '/social/localidades': typeof SocialLocalidadesRoute
   '/social/perfil': typeof SocialPerfilRoute
   '/social/publicacoes': typeof SocialPublicacoesRoute
   '/social/publico': typeof SocialPublicoRoute
@@ -274,7 +274,7 @@ export interface FileRoutesById {
   '/social/historico': typeof SocialHistoricoRoute
   '/social/importar': typeof SocialImportarRoute
   '/social/impulsionamentos': typeof SocialImpulsionamentosRoute
-  '/social/mapa': typeof SocialMapaRoute
+  '/social/localidades': typeof SocialLocalidadesRoute
   '/social/perfil': typeof SocialPerfilRoute
   '/social/publicacoes': typeof SocialPublicacoesRoute
   '/social/publico': typeof SocialPublicoRoute
@@ -308,7 +308,7 @@ export interface FileRouteTypes {
     | '/social/historico'
     | '/social/importar'
     | '/social/impulsionamentos'
-    | '/social/mapa'
+    | '/social/localidades'
     | '/social/perfil'
     | '/social/publicacoes'
     | '/social/publico'
@@ -339,7 +339,7 @@ export interface FileRouteTypes {
     | '/social/historico'
     | '/social/importar'
     | '/social/impulsionamentos'
-    | '/social/mapa'
+    | '/social/localidades'
     | '/social/perfil'
     | '/social/publicacoes'
     | '/social/publico'
@@ -371,7 +371,7 @@ export interface FileRouteTypes {
     | '/social/historico'
     | '/social/importar'
     | '/social/impulsionamentos'
-    | '/social/mapa'
+    | '/social/localidades'
     | '/social/perfil'
     | '/social/publicacoes'
     | '/social/publico'
@@ -506,11 +506,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SocialPerfilRouteImport
       parentRoute: typeof SocialRoute
     }
-    '/social/mapa': {
-      id: '/social/mapa'
-      path: '/mapa'
-      fullPath: '/social/mapa'
-      preLoaderRoute: typeof SocialMapaRouteImport
+    '/social/localidades': {
+      id: '/social/localidades'
+      path: '/localidades'
+      fullPath: '/social/localidades'
+      preLoaderRoute: typeof SocialLocalidadesRouteImport
       parentRoute: typeof SocialRoute
     }
     '/social/impulsionamentos': {
@@ -623,7 +623,7 @@ interface SocialRouteChildren {
   SocialHistoricoRoute: typeof SocialHistoricoRoute
   SocialImportarRoute: typeof SocialImportarRoute
   SocialImpulsionamentosRoute: typeof SocialImpulsionamentosRoute
-  SocialMapaRoute: typeof SocialMapaRoute
+  SocialLocalidadesRoute: typeof SocialLocalidadesRoute
   SocialPerfilRoute: typeof SocialPerfilRoute
   SocialPublicacoesRoute: typeof SocialPublicacoesRoute
   SocialPublicoRoute: typeof SocialPublicoRoute
@@ -645,7 +645,7 @@ const SocialRouteChildren: SocialRouteChildren = {
   SocialHistoricoRoute: SocialHistoricoRoute,
   SocialImportarRoute: SocialImportarRoute,
   SocialImpulsionamentosRoute: SocialImpulsionamentosRoute,
-  SocialMapaRoute: SocialMapaRoute,
+  SocialLocalidadesRoute: SocialLocalidadesRoute,
   SocialPerfilRoute: SocialPerfilRoute,
   SocialPublicacoesRoute: SocialPublicacoesRoute,
   SocialPublicoRoute: SocialPublicoRoute,

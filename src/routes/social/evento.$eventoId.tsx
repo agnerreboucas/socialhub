@@ -99,11 +99,14 @@ function EventoPage() {
           <Campo icone={MapPin} rotulo="Local">
             {evento.local ?? "Não informado"}
             {municipio ? (
-              // O município sai do texto do local pelo mesmo casamento de nomes
-              // que o mapa usa — e por isso dá para ir do compromisso ao
-              // território sem ninguém digitar código do IBGE.
-              <Link to="/social/mapa" className="mt-1 block text-xs text-accent hover:underline">
-                Ver {municipio.nome} no mapa
+              // O município sai do texto do local pelo casamento de nomes — e
+              // por isso dá para ir do compromisso ao alcance daquela cidade sem
+              // ninguém digitar código do IBGE.
+              <Link
+                to="/social/localidades"
+                className="mt-1 block text-xs text-accent hover:underline"
+              >
+                Ver o alcance em {municipio.nome}
               </Link>
             ) : null}
           </Campo>

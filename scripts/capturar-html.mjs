@@ -7,11 +7,11 @@ import { chromium } from "playwright-core";
  * estático troca os módulos de servidor por versões de navegador, e uma tela
  * pode passar no `vite build` e mesmo assim não desenhar aqui.
  *
- *   ARQUIVO=/caminho/social-hub.html TELAS="Mapa de SP,Público" \
+ *   ARQUIVO=/caminho/social-hub.html TELAS="Localidades,Público" \
  *   DESTINO=/tmp node scripts/capturar-html.mjs
  */
 const ARQUIVO = process.env.ARQUIVO;
-const TELAS = (process.env.TELAS ?? "Mapa de SP").split(",").filter(Boolean);
+const TELAS = (process.env.TELAS ?? "Localidades").split(",").filter(Boolean);
 const DESTINO = process.env.DESTINO ?? "/tmp";
 const ALTURA = Number(process.env.ALTURA ?? 1400);
 const PROJETO = process.env.PROJETO ?? "proj-mercadinho";

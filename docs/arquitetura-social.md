@@ -37,6 +37,7 @@ semeados — cada um exerce um papel diferente:
 | `/social/relatorios` | 3.6 — geração e compartilhamento |
 | `/social/equipe` | 3.7 — usuários e permissões |
 | `/relatorio/$token` | 3.6 — página pública somente leitura (sem sessão) |
+| `/social/localidades` | 3.2 — alcance por cidade, estado e região (Brasil todo) |
 | `/oauth/retorno` | 3.1 — retorno da autorização da Meta e escolha das contas |
 
 ## Camadas
@@ -53,6 +54,7 @@ src/lib/social/snapshot.ts     o estado como arquivo JSON, versionado e validado
 src/lib/social/snapshot.server.ts  escolhe entre banco e arquivo, e grava
 src/lib/social/banco/*        esquema, mapeamento e acesso ao Postgres
 src/lib/social/post-analytics.ts  desempenho por publicação (divisão por conta, curva, engajamento)
+src/lib/social/localidades.ts   alcance por cidade, estado e região, com UF lida do que a rede informou
 src/lib/social/session.tsx     sessão do cliente + seletor de projeto
 src/lib/social/store.server.ts persistência (hoje em memória, semeada de forma determinística)
 src/lib/social/oauth/*         integração oficial com a Meta (OAuth + Graph API)

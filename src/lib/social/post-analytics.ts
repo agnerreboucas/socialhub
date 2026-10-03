@@ -27,14 +27,17 @@ function pseudoAleatorio(chave: string): number {
   return (semente(chave) % 1000) / 1000;
 }
 
-const CAMPOS: (keyof PostMetrics)[] = [
-  "reach",
-  "impressions",
-  "likes",
-  "comments",
-  "shares",
-  "saves",
-];
+/**
+ * Os campos que toda rede sempre devolve, e que por isso dá para dividir.
+ *
+ * Não é `keyof PostMetrics`: `clicks` é opcional porque nem toda rede informa
+ * clique no link, e dividir um campo ausente produziria zeros que se leem como
+ * "ninguém clicou" em vez de "não medimos". A divisão fica nos campos que
+ * existem sempre; `clicks` chega à tela inteiro, do total da peça.
+ */
+export type CampoDivisivel = "reach" | "impressions" | "likes" | "comments" | "shares" | "saves";
+
+const CAMPOS: CampoDivisivel[] = ["reach", "impressions", "likes", "comments", "shares", "saves"];
 
 /**
  * Divide o total entre as contas de destino, com pesos estáveis por conta.

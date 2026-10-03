@@ -320,6 +320,15 @@ export type PostMetrics = {
   comments: number;
   shares: number;
   saves: number;
+  /**
+   * Cliques no link da publicação.
+   *
+   * Opcional porque nem toda rede entrega este número para conteúdo orgânico, e
+   * nem toda peça tem link. `undefined` quer dizer "a rede não informou", que é
+   * diferente de zero — e a tela precisa distinguir os dois, senão uma peça sem
+   * medição parece uma peça que ninguém clicou.
+   */
+  clicks?: number;
 };
 
 export type BoostObjective = "alcance" | "engajamento" | "trafego" | "mensagens";
@@ -358,7 +367,7 @@ export type Boost = {
      *
      * Ausente quando a campanha foi cadastrada à mão ou quando a quebra ainda
      * não foi importada. Nesse caso a plataforma reparte igualmente e **avisa
-     * na tela que aquilo é estimativa** — ver `montarMapa`.
+     * na tela que aquilo é estimativa** — ver `alcancePorLocal`.
      */
     porLocal?: { local: string; reach: number; spend: number }[];
   };

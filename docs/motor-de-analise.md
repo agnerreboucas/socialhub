@@ -199,9 +199,9 @@ para uma de 13 mil.
 
 Por isso `Boost.results.porLocal` existe. Quando a quebra está lá, cada cidade
 recebe o que de fato aconteceu nela e o número é **medido**. Quando não está, a
-divisão igual acontece, mas o ponto sai marcado como **estimado**: o círculo no
-mapa fica tracejado, o rótulo do detalhe vira "Alcançados aqui (estimado)" e a
-nota diz "repartido igualmente entre as cidades do anúncio".
+divisão igual acontece, mas a linha sai marcada como **estimada**: a barra da
+cidade fica âmbar em vez de azul, o rodapé diz "número estimado" e o detalhe da
+entrega carrega a etiqueta "estimado".
 
 Uma cidade que recebeu uma campanha medida e outra repartida conta como
 estimada. É a leitura conservadora, e é a certa: quem lê "medido" precisa poder

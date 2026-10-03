@@ -98,9 +98,7 @@ if ((await campoEmail.count()) === 0) {
     ["Importar histórico", /Traga a planilha|Escolha a conta/i],
     ["Conteúdo", /Peça a peça|Por formato/i],
     ["Público", /Cidades|De onde vêm estes números/i],
-    // As duas telas que o estado de São Paulo pediu: o mapa precisa desenhar os
-    // 645 municípios e a pirâmide precisa separar homens de mulheres.
-    ["Mapa de SP", /645 munic|Onde a campanha/i],
+    ["Localidades", /Alcance por localidade|Cidades alcançadas|Nenhuma entrega/i],
     ["Publicações", /publica/i],
     ["Relacionamento", /interaç|coment/i],
     ["Relatórios", /relat/i],
@@ -144,85 +142,55 @@ if ((await campoEmail.count()) === 0) {
     erros.push("Público não desenhou a pirâmide nem explicou a ausência");
   }
 
+  // --- Onde a campanha chegou ------------------------------------------------
+  //
+  // O mapa do estado saiu: a operação virou nacional e o desenho dependia da
+  // tabela dos 645 municípios paulistas. O que ficou no lugar precisa provar
+  // duas coisas — que a lista fecha com o total, e que uma cidade fora de São
+  // Paulo aparece em vez de ser descartada em silêncio, que era o furo do mapa.
   await pagina
-    .getByRole("link", { name: /^Mapa de SP/i })
+    .getByRole("link", { name: /^Localidades/i })
     .first()
     .click();
   await pagina.waitForTimeout(2500);
-  // Círculos, não polígonos: cada município é um círculo proporcional à
-  // população, e o recorte metropolitano repete os mesmos 645 num segundo SVG.
-  // Antes eram células de Voronoi — mudou porque aquilo desenhava divisas que
-  // não existem.
-  const circulos = await pagina.locator("svg circle").count();
-  if (circulos >= 1290) {
-    console.log(`✓ o mapa desenhou ${circulos} círculos (estado + recorte)`);
+  const localidades = await pagina.locator("body").innerText();
+
+  const vazio = /Nenhuma entrega por localidade/i.test(localidades);
+  if (vazio) {
+    console.log("✓ Localidades explica a ausência de entrega em vez de desenhar zeros");
   } else {
-    erros.push(`o mapa desenhou ${circulos} círculos; esperava 1290 ou mais`);
-  }
+    // Os três cortes do mesmo dado. Sem o de região a pergunta nacional não
+    // tem resposta: cidades espalhadas não dizem se o Nordeste está coberto.
+    for (const corte of ["Cidades", "Estados", "Regiões"]) {
+      const botao = pagina.getByRole("button", { name: corte, exact: true }).first();
+      if ((await botao.count()) === 0) {
+        erros.push(`Localidades não tem o corte "${corte}"`);
+        continue;
+      }
+      await botao.click();
+      await pagina.waitForTimeout(800);
+      console.log(`✓ o corte "${corte}" abre`);
+    }
 
-  // O contorno do estado continua desenhado: é ele que dá forma ao mapa agora
-  // que os círculos flutuam sobre o fundo. Sem ele ninguém reconhece São Paulo.
-  const contorno = await pagina.locator("svg path[d^='M']").count();
-  if (contorno > 0) {
-    console.log("✓ o contorno do estado está desenhado");
-  } else {
-    erros.push("o contorno do estado sumiu do mapa");
-  }
+    await pagina.getByRole("button", { name: "Cidades", exact: true }).first().click();
+    await pagina.waitForTimeout(800);
 
-  // Os raios precisam variar: se todos saíssem iguais, o círculo deixaria de
-  // dizer o tamanho da cidade e viraria enfeite.
-  const raios = await pagina.locator("svg circle").evaluateAll((nos) =>
-    [...new Set(nos.map((no) => no.getAttribute("r")))].length,
-  );
-  if (raios >= 20) {
-    console.log(`✓ os círculos têm ${raios} raios distintos — o tamanho diz a população`);
-  } else {
-    erros.push(`os círculos têm só ${raios} raios distintos; o tamanho não está variando`);
-  }
-
-  // O zoom é a diferença entre um mapa que se olha e um mapa que se explora.
-  // A prova é a janela de visão encolher e mais cidades ganharem nome — se só
-  // o viewBox mudasse, o zoom seria uma lupa que não revela nada.
-  const mapa = pagina.locator('svg[aria-label^="Mapa do estado"]').first();
-  const janelaInicial = await mapa.getAttribute("viewBox");
-  const nomesVisiveis = async () =>
-    (await pagina.locator("svg text").allTextContents()).filter((t) => t.length > 2).length;
-  const nomesAntes = await nomesVisiveis();
-
-  for (let vez = 0; vez < 3; vez += 1) {
-    await pagina.getByRole("button", { name: "Aproximar o mapa" }).click();
-    await pagina.waitForTimeout(400);
-  }
-  const janelaAproximada = await mapa.getAttribute("viewBox");
-  const nomesDepois = await nomesVisiveis();
-
-  if (janelaAproximada !== janelaInicial) {
-    console.log("✓ o mapa aproxima");
-  } else {
-    erros.push("o botão de aproximar não mexeu na janela do mapa");
-  }
-
-  if (nomesDepois > nomesAntes) {
-    console.log(`✓ aproximar revela mais municípios (${nomesAntes} → ${nomesDepois})`);
-  } else {
-    erros.push(`aproximar não revelou municípios novos (${nomesAntes} → ${nomesDepois})`);
-  }
-
-  await pagina.getByRole("button", { name: /Estado inteiro/ }).click();
-  await pagina.waitForTimeout(600);
-  if ((await mapa.getAttribute("viewBox")) === janelaInicial) {
-    console.log("✓ e volta para o estado inteiro");
-  } else {
-    erros.push("o botão de voltar não devolveu o mapa ao estado inteiro");
-  }
-
-  await pagina.locator('circle:has(title:text-is("Sorocaba"))').first().click({ force: true });
-  await pagina.waitForTimeout(2500);
-  const dossie = await pagina.locator("body").innerText();
-  if (/Vizinhos/i.test(dossie) && /Custo por mil/i.test(dossie)) {
-    console.log("✓ clicar no território abre o dossiê do município");
-  } else {
-    erros.push("clicar no território não abriu o dossiê do município");
+    // Clicar numa cidade abre os anúncios que entregaram ali. É o que o mapa
+    // fazia ao clicar num município, e é o que justifica a lista ser navegável
+    // em vez de só um ranking.
+    const primeira = pagina.locator("li button[aria-expanded]").first();
+    if ((await primeira.count()) === 0) {
+      erros.push("a lista de cidades não tem linha clicável");
+    } else {
+      await primeira.click();
+      await pagina.waitForTimeout(2500);
+      const detalhe = await pagina.locator("body").innerText();
+      if (/O que chegou aqui/i.test(detalhe)) {
+        console.log("✓ clicar na cidade abre os anúncios que entregaram ali");
+      } else {
+        erros.push("clicar na cidade não abriu o detalhe da entrega");
+      }
+    }
   }
 
   await pagina

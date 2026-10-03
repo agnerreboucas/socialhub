@@ -89,7 +89,12 @@ import {
   normalizarCidade,
   perfilDoPublico,
 } from "@/lib/social/publico";
-import { medirCobertura, montarMapa } from "@/lib/social/mapa";
+import {
+  alcancePorLocal,
+  alcancePorRegiao,
+  alcancePorUf,
+  totalizarLocalidades,
+} from "@/lib/social/localidades";
 import {
   atividadePorBloco,
   blocosDoDia,
@@ -112,6 +117,11 @@ import {
   resumirDia,
   statusAoCancelar,
 } from "@/lib/social/agenda";
+import {
+  melhorOrganicaSemVerba,
+  recortarPecas,
+  totalizarRecorte,
+} from "@/lib/social/organico-pago";
 import {
   medirAtencao,
   medirConversas,
@@ -867,6 +877,70 @@ export const obterPainel = createServerFn({ method: "POST" })
       // não na tela evita mandar o histórico inteiro de cada conta pela rede só
       // para a tela somá-lo de novo.
       redes: resumirRedes(accounts, period),
+    };
+  });
+
+/**
+ * Cada peça publicada, com o que veio de graça e o que foi pago.
+ *
+ * Busca própria porque é uma tela inteira, não um cartão: mandá-la junto com o
+ * painel carregaria o cruzamento de publicações e anúncios em toda visita,
+ * inclusive nas que nem abrem esta aba.
+ */
+export const recorteOrganicoPago = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ projectId: z.string().optional(), period: periodSchema }))
+  .handler(async ({ data }) => {
+    const db = getDb();
+    const accounts = await contasPermitidas(data.projectId);
+    const period = data.period as PeriodKey;
+
+    const merged = mergeSeries(
+      accounts.map((conta) => slicePeriod(db.metrics.get(conta.id) ?? [], period)),
+    );
+    const desde = merged[0]?.date ?? null;
+
+    const daConta = (post: Post) =>
+      post.accountIds.some((id) => accounts.some((conta) => conta.id === id));
+
+    // O recorte segue a mesma janela do resto do painel. Sem isso, a tabela
+    // mostraria o histórico inteiro ao lado de um alcance de trinta dias.
+    const posts = db.posts.filter(
+      (post) => daConta(post) && (!desde || (post.publishedAt ?? "") >= desde),
+    );
+    const boosts = db.boosts.filter((boost) =>
+      accounts.some((conta) => conta.id === boost.accountId),
+    );
+
+    const pecas = recortarPecas(posts, boosts, accounts);
+    const melhorLivre = melhorOrganicaSemVerba(pecas);
+
+    return {
+      totais: totalizarRecorte(pecas),
+      candidata: melhorLivre
+        ? {
+            postId: melhorLivre.post.id,
+            legenda: resumoDaLegenda(melhorLivre.post.caption),
+            alcanceOrganico: melhorLivre.alcanceOrganico,
+          }
+        : null,
+      pecas: pecas.map((peca) => ({
+        postId: peca.post.id,
+        legenda: resumoDaLegenda(peca.post.caption),
+        formato: peca.post.format,
+        publicadoEm: peca.post.publishedAt,
+        redes: peca.redes,
+        anuncios: peca.impulsionamentos.length,
+        alcanceTotal: peca.alcanceTotal,
+        alcanceOrganico: peca.alcanceOrganico,
+        alcancePago: peca.alcancePago,
+        impressoes: peca.impressoesTotal,
+        interacoes: peca.interacoes,
+        comentarios: peca.comentarios,
+        cliques: peca.cliques,
+        investido: peca.investido,
+        custoPorMil: peca.custoPorMil,
+        inconsistente: peca.inconsistente,
+      })),
     };
   });
 
@@ -3346,77 +3420,99 @@ export const detalharCidade = createServerFn({ method: "POST" })
   });
 
 /**
- * O mapa do estado de São Paulo e a cobertura da campanha nele.
+ * Onde a campanha chegou: cidades, estados e regiões, no Brasil todo.
  *
- * Cruza os 645 municípios da matriz do IPS com a segmentação dos anúncios. O
- * alcance por município vem do contrato do anúncio — é o dado firme —, e o que
- * ficou sem entrega aparece como vazio no mapa, que é a informação que leva a
- * mudar a segmentação.
+ * Substituiu o mapa do estado de São Paulo. A lista não é só outra forma de
+ * desenhar o mesmo dado: o mapa dependia da tabela de municípios paulistas para
+ * existir, e descartava em silêncio qualquer lugar fora dela. Rodando nacional,
+ * aqui **toda localidade que a rede informou aparece** — inclusive a que a
+ * plataforma não consegue classificar, que vira um grupo próprio em vez de
+ * desaparecer.
  */
-export const obterMapaSP = createServerFn({ method: "POST" })
-  .inputValidator(
-    z.object({
-      projectId: z.string().optional(),
-      /** Quantos do topo do ranking contam como prioritários. */
-      prioritarios: z.number().int().min(5).max(200).default(50),
-    }),
-  )
+export const obterLocalidades = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ projectId: z.string().optional() }))
   .handler(async ({ data }) => {
     const db = getDb();
     const contas = await contasPermitidas(data.projectId);
     const ids = new Set(contas.map((conta) => conta.id));
 
     const impulsionamentos = db.boosts.filter((boost) => ids.has(boost.accountId));
-    const pontos = montarMapa(impulsionamentos);
+    const locais = alcancePorLocal(impulsionamentos);
 
     return {
-      pontos,
-      cobertura: medirCobertura(pontos, data.prioritarios),
-      // Segmentações que não casaram com nenhum município do estado: é o que
-      // explica um alcance que existe na campanha e não aparece no mapa.
-      foraDoEstado: [
-        ...new Set(
-          impulsionamentos.flatMap((boost) =>
-            boost.audience.locations.filter((local) => !acharMunicipio(local)),
-          ),
-        ),
-      ],
+      locais,
+      porRegiao: alcancePorRegiao(locais),
+      porUf: alcancePorUf(locais),
+      totais: totalizarLocalidades(locais),
     };
   });
 
 /**
- * Tudo o que a plataforma sabe sobre um município.
+ * Tudo o que a plataforma sabe sobre uma localidade.
  *
- * Existe separada de `obterMapaSP` porque é o oposto dela: o mapa precisa de
- * pouco sobre 645 municípios, e isto precisa de muito sobre um. Juntar as duas
- * mandaria a peça, o impulsionamento e o vizinho de cada município do estado
- * para o navegador toda vez que alguém abrisse a tela.
+ * Existe separada de `obterLocalidades` porque é o oposto dela: a lista precisa
+ * de pouco sobre muitas cidades, e isto precisa de muito sobre uma. Juntar as
+ * duas mandaria a peça e o impulsionamento de cada cidade alcançada para o
+ * navegador toda vez que alguém abrisse a tela.
+ *
+ * A chave é o texto que a rede informou, não um código do IBGE: a plataforma
+ * trabalha no Brasil todo e não tem a tabela de municípios dos 26 estados. A
+ * ficha territorial aparece só quando o nome bate com a matriz paulista — e é
+ * isso mesmo, porque é a única matriz que existe aqui.
  */
-export const detalharMunicipio = createServerFn({ method: "POST" })
-  .inputValidator(
-    z.object({
-      projectId: z.string().optional(),
-      codigo: z.string(),
-      prioritarios: z.number().int().min(5).max(200).default(50),
-    }),
-  )
+export const detalharLocalidade = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ projectId: z.string().optional(), local: z.string().min(1) }))
   .handler(async ({ data }) => {
     const db = getDb();
     const contas = await contasPermitidas(data.projectId);
     const ids = new Set(contas.map((conta) => conta.id));
 
     const impulsionamentos = db.boosts.filter((boost) => ids.has(boost.accountId));
-    const pontos = montarMapa(impulsionamentos);
-    const ponto = pontos.find((candidato) => candidato.municipio.codigo === data.codigo);
-    if (!ponto) throw new Error("Município não encontrado.");
+    const locais = alcancePorLocal(impulsionamentos);
 
-    // Os anúncios que miraram este município, com a fatia que coube a ele.
+    const chave = (texto: string) =>
+      texto
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const local = locais.find((candidato) => chave(candidato.local) === chave(data.local));
+    if (!local) throw new Error("Localidade sem entrega registrada.");
+
+    /**
+     * Os anúncios que entregaram aqui, com a fatia que caberia a esta cidade.
+     *
+     * `cidadesNoAnuncio` muda como se lê o número: 5.000 pessoas de um anúncio
+     * que mirou uma cidade é outra coisa que 5.000 de um que mirou quarenta.
+     */
     const entregas = impulsionamentos
       .map((boost) => {
-        const alvos = boost.audience.locations
-          .map((local) => acharMunicipio(local))
-          .filter((municipio): municipio is NonNullable<typeof municipio> => municipio !== null);
-        if (!alvos.some((alvo) => alvo.codigo === data.codigo)) return null;
+        const quebra = boost.results.porLocal ?? [];
+        const medido = quebra.find((linha) => chave(linha.local) === chave(local.local));
+
+        if (medido) {
+          const post = db.posts.find((candidato) => candidato.id === boost.postId);
+          return {
+            boostId: boost.id,
+            objetivo: boost.objective,
+            status: boost.status,
+            comecouEm: boost.startedAt,
+            terminaEm: boost.endsAt,
+            cidadesNoAnuncio: quebra.length,
+            outrasCidades: quebra
+              .filter((linha) => chave(linha.local) !== chave(local.local))
+              .map((linha) => linha.local),
+            alcance: Math.round(medido.reach),
+            investido: Math.round(medido.spend * 100) / 100,
+            estimado: false,
+            peca: post ? resumirPeca(post, contas) : null,
+          };
+        }
+
+        const alvos = boost.audience.locations.filter((texto) => texto.trim().length > 0);
+        if (!alvos.some((texto) => chave(texto) === chave(local.local))) return null;
 
         const fatia = 1 / alvos.length;
         const post = db.posts.find((candidato) => candidato.id === boost.postId);
@@ -3427,68 +3523,35 @@ export const detalharMunicipio = createServerFn({ method: "POST" })
           status: boost.status,
           comecouEm: boost.startedAt,
           terminaEm: boost.endsAt,
-          /** Quantas cidades dividiram este anúncio — muda como ler o número. */
           cidadesNoAnuncio: alvos.length,
-          outrasCidades: alvos
-            .filter((alvo) => alvo.codigo !== data.codigo)
-            .map((alvo) => alvo.nome),
+          outrasCidades: alvos.filter((texto) => chave(texto) !== chave(local.local)),
           alcance: Math.round(boost.results.reach * fatia),
           investido: Math.round(boost.results.spend * fatia * 100) / 100,
+          estimado: true,
           peca: post ? resumirPeca(post, contas) : null,
         };
       })
       .filter((entrega): entrega is NonNullable<typeof entrega> => entrega !== null)
       .sort((a, b) => b.alcance - a.alcance);
 
-    const prioritarios = pontos
-      .filter((candidato) => candidato.municipio.posicao !== null)
-      .sort((a, b) => (a.municipio.posicao ?? 0) - (b.municipio.posicao ?? 0))
-      .slice(0, data.prioritarios);
-    const ehPrioritario = prioritarios.some(
-      (candidato) => candidato.municipio.codigo === data.codigo,
-    );
-
-    /**
-     * Os vizinhos, pela distância entre as sedes.
-     *
-     * Serve à decisão seguinte à leitura do mapa: se aqui deu certo, o vizinho
-     * é o próximo candidato natural — e saber se ele já recebeu entrega evita
-     * repetir onde já se está.
-     */
-    const vizinhos = pontos
-      .filter((candidato) => candidato.municipio.codigo !== data.codigo)
-      .map((candidato) => ({
-        candidato,
-        distancia: Math.hypot(
-          candidato.municipio.lat - ponto.municipio.lat,
-          candidato.municipio.lon - ponto.municipio.lon,
-        ),
-      }))
-      .sort((a, b) => a.distancia - b.distancia)
-      .slice(0, 6)
-      .map(({ candidato }) => ({
-        codigo: candidato.municipio.codigo,
-        nome: candidato.municipio.nome,
-        populacao: candidato.municipio.populacao,
-        posicao: candidato.municipio.posicao,
-        alcance: candidato.alcance,
-      }));
+    // Só existe para municípios paulistas: é a única matriz territorial que a
+    // plataforma carrega. Para o resto do país fica nulo, e a tela não finge.
+    const municipio = acharMunicipio(local.cidade);
 
     return {
-      ponto,
+      local,
       entregas,
-      vizinhos,
-      ehPrioritario,
+      municipio,
       /**
        * Alcance sobre a população do município.
        *
-       * Nulo quando a população não está na matriz. É a razão que diz se o
-       * investimento foi denso ou espalhado: 5.000 pessoas em Vinhedo é outra
-       * coisa que 5.000 em Guarulhos.
+       * Nulo quando a população não está na matriz — o que inclui todo o país
+       * fora de São Paulo. É a razão que diz se o investimento foi denso ou
+       * espalhado: 5.000 pessoas em Vinhedo é outra coisa que 5.000 em Guarulhos.
        */
       penetracao:
-        ponto.municipio.populacao && ponto.municipio.populacao > 0
-          ? ponto.alcance / ponto.municipio.populacao
+        municipio?.populacao && municipio.populacao > 0
+          ? local.alcance / municipio.populacao
           : null,
     };
   });
@@ -3562,6 +3625,7 @@ function gerarPautas(eventos: Evento[], criadoPor: string): Post[] {
  * puro e roda no navegador — assim trocar de mês, de semana ou de visão não
  * custa uma ida ao servidor, que é o que faria o calendário parecer pesado.
  */
+
 export const listarAgenda = createServerFn({ method: "POST" })
   .inputValidator(z.object({ projectId: z.string().optional() }))
   .handler(async ({ data }) => {
