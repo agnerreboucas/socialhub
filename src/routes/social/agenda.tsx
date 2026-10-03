@@ -569,6 +569,7 @@ function AgendaPage() {
           projectId={projectId ?? ""}
           userId={session.user.id}
           diaSugerido={publicandoNoDia}
+          pecasDoPerfil={posts}
           onCreated={() => {
             setPublicandoNoDia(null);
             invalidar();

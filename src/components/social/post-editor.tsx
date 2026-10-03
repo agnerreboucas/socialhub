@@ -12,6 +12,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { criarPublicacao, validarRascunho } from "@/lib/api/social.functions";
+import { PreviaInstagram } from "@/components/social/previa-instagram";
 import { AccountAvatar, InlineError, NetworkChip } from "@/components/social/primitives";
 import {
   Dialog,
@@ -22,7 +23,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MIDIA_PADRAO, NETWORKS } from "@/lib/social/networks";
-import type { FormatoPublicavel, PostMedia, SocialAccount } from "@/lib/social/types";
+import { gradeDoPerfil } from "@/lib/social/previa";
+import type { FormatoPublicavel, Post, PostMedia, SocialAccount } from "@/lib/social/types";
 import { cn } from "@/lib/utils";
 
 const FORMAT_OPTIONS: {
@@ -47,6 +49,7 @@ export function PostEditorDialog({
   userId,
   onCreated,
   diaSugerido,
+  pecasDoPerfil = [],
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -54,6 +57,14 @@ export function PostEditorDialog({
   projectId: string;
   userId: string;
   onCreated: () => void;
+  /**
+   * As peças já publicadas e agendadas, para a prévia da grade do perfil.
+   *
+   * Vem de quem abre o editor em vez de ser buscada aqui: as duas telas que o
+   * abrem já têm a lista carregada, e uma consulta própria traria de novo o que
+   * está do outro lado do diálogo.
+   */
+  pecasDoPerfil?: Post[];
   /**
    * O dia que já estava escolhido quando o editor abriu — vem do calendário.
    *
@@ -73,6 +84,19 @@ export function PostEditorDialog({
   const [erro, setErro] = useState<string | null>(null);
 
   const selectedAccounts = accounts.filter((account) => accountIds.includes(account.id));
+
+  /**
+   * De quem a prévia empresta o nome e o avatar.
+   *
+   * Prefere uma conta de Instagram entre as escolhidas, porque é o Instagram que
+   * a prévia imita. Sem nenhuma escolhida ainda, a prévia usa um perfil genérico
+   * em vez de ficar vazia: quem está escrevendo a legenda precisa ver o corte
+   * antes de decidir onde publicar.
+   */
+  const previaDaConta =
+    selectedAccounts.find((account) => account.networkId === "instagram") ??
+    selectedAccounts[0] ??
+    accounts.find((account) => account.networkId === "instagram");
 
   // Limite de legenda mais restrito entre as redes escolhidas.
   const captionLimit = useMemo(() => {
@@ -145,7 +169,7 @@ export function PostEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>Nova publicação</DialogTitle>
           <DialogDescription>
@@ -154,6 +178,7 @@ export function PostEditorDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-5">
           <div className="space-y-2">
             <span className="text-sm font-medium">Formato</span>
@@ -362,6 +387,24 @@ export function PostEditorDialog({
           )}
 
           {erro ? <InlineError>{erro}</InlineError> : null}
+        </div>
+
+          {/*
+            A prévia fica ao lado do formulário, não atrás de um botão.
+            Escondida, ela só é aberta quando alguém já decidiu a legenda — e o
+            corte no "mais" é exatamente o que precisa ser visto enquanto se
+            escreve, não depois.
+          */}
+          <aside className="lg:sticky lg:top-0 lg:self-start">
+            <p className="mb-2 text-sm font-medium">Como vai aparecer</p>
+            <PreviaInstagram
+              conta={previaDaConta}
+              legenda={caption}
+              media={media}
+              formato={format}
+              grade={gradeDoPerfil(pecasDoPerfil)}
+            />
+          </aside>
         </div>
 
         <DialogFooter className="gap-2">

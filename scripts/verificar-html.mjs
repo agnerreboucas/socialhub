@@ -550,6 +550,88 @@ if ((await campoEmail.count()) === 0) {
     console.log("✓ nenhum nome técnico de formato vazou para a tela");
   }
 
+  // --- A prévia do Instagram ------------------------------------------------
+  //
+  // A prévia existe para mostrar, enquanto se escreve, o que o Instagram vai
+  // fazer com a peça: cortar a legenda no "mais" e recortar a arte. O que ela
+  // precisa provar é o corte — uma prévia bonita que não mostra onde o texto
+  // some não serve para montar linha editorial.
+  const abrirEditor = pagina
+    .getByRole("button", { name: /Nova publicação|Nova peça|^Publicar/i })
+    .first();
+
+  if ((await abrirEditor.count()) === 0) {
+    erros.push("não achei o botão de nova publicação");
+  } else {
+    await abrirEditor.click();
+    await pagina.waitForTimeout(1500);
+    const editor = pagina.getByRole("dialog");
+
+    if ((await editor.count()) === 0) {
+      erros.push("o editor de publicação não abriu");
+    } else {
+      if (/Como vai aparecer/i.test(await editor.innerText())) {
+        console.log("✓ a prévia aparece ao lado do formulário");
+      } else {
+        erros.push("a prévia não apareceu no editor");
+      }
+
+      for (const aba of ["Feed", "Story", "Grade"]) {
+        const botao = editor.getByRole("button", { name: aba, exact: true }).first();
+        if ((await botao.count()) === 0) {
+          erros.push(`a prévia não tem a aba ${aba}`);
+          continue;
+        }
+        await botao.click();
+        await pagina.waitForTimeout(400);
+        console.log(`✓ a prévia abre em ${aba}`);
+      }
+
+      await editor.getByRole("button", { name: "Feed", exact: true }).first().click();
+      await pagina.waitForTimeout(400);
+
+      await editor
+        .locator("#caption")
+        .fill(
+          "A campanha chegou em Guarulhos hoje e a conversa foi sobre creche, transporte e o que falta no bairro para quem trabalha longe de casa todos os dias",
+        );
+      await pagina.waitForTimeout(1200);
+
+      if (/atrás do [“"]mais/i.test(await editor.innerText())) {
+        console.log("✓ a prévia diz onde o feed corta a legenda");
+      } else {
+        erros.push("a prévia não mostrou o corte da legenda");
+      }
+
+      const mais = editor.getByRole("button", { name: "mais", exact: true }).first();
+      if ((await mais.count()) === 0) {
+        erros.push("a prévia não tem o “mais” clicável");
+      } else {
+        await mais.click();
+        await pagina.waitForTimeout(500);
+        if (/Mostrando a legenda inteira/i.test(await editor.innerText())) {
+          console.log("✓ e o “mais” abre a legenda inteira");
+        } else {
+          erros.push("clicar em “mais” não abriu a legenda inteira");
+        }
+      }
+
+      // 31 marcações a rede recusa: tem de sair como erro, não como estilo.
+      await editor
+        .locator("#caption")
+        .fill(Array.from({ length: 31 }, (_, i) => `#tag${i}`).join(" "));
+      await pagina.waitForTimeout(1200);
+      if (/31 marcações/.test(await editor.innerText())) {
+        console.log("✓ a prévia acusa o limite de 30 marcações");
+      } else {
+        erros.push("a prévia não acusou as 31 marcações");
+      }
+
+      await pagina.keyboard.press("Escape");
+      await pagina.waitForTimeout(600);
+    }
+  }
+
   await pagina.screenshot({ path: process.env.CAPTURA ?? "/tmp/html.png", fullPage: true });
 }
 

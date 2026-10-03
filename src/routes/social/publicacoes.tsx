@@ -197,6 +197,7 @@ function PublicacoesPage() {
           projectId={projectId}
           userId={session.user.id}
           onCreated={invalidate}
+          pecasDoPerfil={posts}
         />
       ) : null}
     </div>
