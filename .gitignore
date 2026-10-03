@@ -37,3 +37,6 @@ dist-static
 *.njsproj
 *.sln
 *.sw?
+
+# O kit é empacotado a partir de kit-social/; o zip não entra no repositório.
+kit-social.zip

@@ -95,6 +95,16 @@ import {
   alcancePorUf,
   totalizarLocalidades,
 } from "@/lib/social/localidades";
+/**
+ * A dedução de estado para cidade que chega sem ele.
+ *
+ * Fica aqui, no servidor, e não dentro de `localidades.ts`: a tabela é de um
+ * estado só, e um módulo nacional que a importasse não se levaria para outro
+ * projeto sem arrastar 645 linhas que não servem. A plataforma nasceu em São
+ * Paulo, então é essa a matriz que existe — e o resultado sai marcado como
+ * dedução, nunca como informação da rede.
+ */
+const deduzirUfPelaMatrizPaulista = (cidade: string) => (acharMunicipio(cidade) ? "SP" : null);
 import {
   atividadePorBloco,
   blocosDoDia,
@@ -3437,7 +3447,7 @@ export const obterLocalidades = createServerFn({ method: "POST" })
     const ids = new Set(contas.map((conta) => conta.id));
 
     const impulsionamentos = db.boosts.filter((boost) => ids.has(boost.accountId));
-    const locais = alcancePorLocal(impulsionamentos);
+    const locais = alcancePorLocal(impulsionamentos, deduzirUfPelaMatrizPaulista);
 
     return {
       locais,
@@ -3468,7 +3478,7 @@ export const detalharLocalidade = createServerFn({ method: "POST" })
     const ids = new Set(contas.map((conta) => conta.id));
 
     const impulsionamentos = db.boosts.filter((boost) => ids.has(boost.accountId));
-    const locais = alcancePorLocal(impulsionamentos);
+    const locais = alcancePorLocal(impulsionamentos, deduzirUfPelaMatrizPaulista);
 
     const chave = (texto: string) =>
       texto

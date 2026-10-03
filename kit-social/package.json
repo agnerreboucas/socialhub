@@ -1,0 +1,11 @@
+{
+  "name": "kit-social",
+  "private": true,
+  "type": "module",
+  "description": "Núcleo portátil de publicação, análise e insights de redes sociais. Sem dependência de runtime.",
+  "scripts": {
+    "test": "node --experimental-strip-types --test \"nucleo/**/*.test.ts\"",
+    "tipos": "tsc --noEmit",
+    "exemplo": "node --experimental-strip-types exemplo.ts"
+  }
+}
